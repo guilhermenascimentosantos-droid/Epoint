@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Epoint</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="app"> <!-- Container principal do aplicativo -->
+    <section class="painel"> <!-- Painel centralizado para o conteúdo principal -->
+
+        <header class="topo">
+            <div class="topo-esquerda">
+                <div class="usuario"> <!-- Parte do perfil do usuário, pode ser expandida futuramente para incluir foto, etc.-->
+                <span>Usuário</span>
+                <strong>Guilherme</strong>
+            </div>
+            </div>
+
+            <div class="topo-centro">
+                <h1>Epoint</h1> <!-- Título principal do aplicativo -->
+                <p>Registro de ponto simples e objetivo</p>
+            </div>
+
+            <div class="topo-direita"></div>
+</header>
+
+    <section class="conteudo"> <!-- Seção para os cards de ações e resumo, usando grid para layout -->
+        <div class="card acao-card">
+            <div class="card-tag">Entrada</div> <!-- Parte de "Entrada"-->
+
+                <h2>Início do expediente</h2>
+                <p class="descricao">Marque o horário de entrada.</p>
+
+            <div class="hora-registro.vazio" id="entradaHora">Aguardando...</div>
+
+            <div class="status" id="entradaStatus">Ainda não registrada</div>
+
+                <button class="botao-principal" onclick="registrarEntrada()">
+                Registrar entrada
+                </button>
+            </div>
+
+        <div class="card acao-card">
+            <div class="card-tag">Intervalo</div> <!-- Parte de "Intervalo"-->
+
+                <h2>Pausa do expediente</h2>
+                <p class="descricao">Marque o horário do intervalo.</p>
+
+            <div class="hora-registro.vazio" id="intervaloHora">Aguardando...</div>
+
+            <div class="status" id="intervaloStatus">Ainda não registrado</div>
+                <button class="botao-principal" onclick="registrarIntervalo()">
+                Registrar intervalo
+                </button>
+        </div>
+
+        <div class="card acao-card">
+            <div class="card-tag">Saída</div> <!-- Parte de "Saída"-->
+
+                <h2>Fim do expediente</h2>
+                <p class="descricao">Marque o horário de saída.</p>
+                    
+            <div class="hora-registro.vazio" id="saidaHora">Aguardando...</div>
+
+            <div class="status" id="saidaStatus">Ainda não registrada</div>
+                <button class="botao-principal" onclick="registrarSaida()">
+                Registrar saída
+                </button>
+        </div>
+
+        <div class="card card-resumo">
+            <div class="card-tag">Tempo trabalhado</div> <!-- Parte de "Tempo trabalhado"-->
+            <h2>Total do dia</h2>
+
+            <div class="relogio-total" id="tempoTrabalhado">00:00:00</div>
+
+            <div class="resumo-linha">
+            <span>Entrada</span>
+            <strong id="resumoEntrada">Não registrado</strong>
+            </div>
+
+            <div class="resumo-linha">
+            <span>Intervalo</span>
+            <strong id="resumoIntervalo">Não registrado</strong>
+            </div>
+
+            <div class="resumo-linha">
+            <span>Saída</span>
+            <strong id="resumoSaida">Não registrado</strong>
+            </div>
+  </div>
+</section>
+
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+</body>
+</html>
