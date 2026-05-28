@@ -190,6 +190,57 @@ body {
   justify-content: center;
 }
 
+.status-geral {
+  display: inline-block;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 8px 0 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f7bd9;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.status-inicial {
+  color: #eef2ff;
+  background: #64748b;
+}
+
+.status-trabalhando {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.status-intervalo {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.status-encerrado {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.status {
+  font-size: 14px;
+  margin-bottom: 18px;
+  font-weight: 500;
+}
+
+.status-aguardando {
+  color: #94a3b8;
+}
+
+.status-ativo {
+  color: #d97706
+}
+
+.status-concluido {
+  color: #16a34a;
+}
+
 .resumo-linha {
   display: flex;
   justify-content: space-between;

@@ -28,11 +28,15 @@ function registrarEntrada() {
     inicioContagem = entrada; // A contagem do tempo começa na entrada
     estado = "trabalhando"; // Atualiza o estado para "trabalhando"
 
-    document.getElementById("entradaHora").textContent = formatarHora(entrada); // Exibe o horário de entrada
-    document.getElementById("entradaStatus").textContent = "Entrada registrada"; // Atualiza o status da entrada
+    const entradaHoraE1 = document.getElementById("entradaHora");
+    entradaHoraE1.textContent = formatarHora(entrada); // Exibe o horário de entrada
+    entradaHoraE1.classList.remove("vazio"); // Remove a classe de estilo "vazio" para mostrar que a entrada foi registrada
+
+    atualizarStatusCard("entradaStatus", "Entrada registrada", "status-concluido"); // Atualiza o status da entrada
     document.getElementById("resumoEntrada").textContent = formatarHora(entrada); // Atualiza o resumo da entrada
 
     atualizarBotoes(); // Atualiza os botões disponíveis
+    atualizarStatusGeral(); // Atualiza o status geral
 }
 
 function registrarIntervalo() {
@@ -42,11 +46,15 @@ function registrarIntervalo() {
     tempoAcumulado += inicioIntervalo - inicioContagem; // Acumula o tempo trabalhado até o início do intervalo
     estado = "intervalo"; // Atualiza o estado para "intervalo"
 
-    document.getElementById("intervaloHora").textContent = formatarHora(inicioIntervalo); // Exibe o horário de início do intervalo
-    document.getElementById("intervaloStatus").textContent = "Intervalo em andamento";
-    document.getElementById("resumoIntervalo").textContent = formatarHora(inicioIntervalo); // Atualiza o resumo do início do intervalo
+    const intervaloHoraE1 = document.getElementById("intervaloHora");
+    intervaloHoraE1.textContent = formatarHora(inicioIntervalo); // Exibe o horário de início do intervalo
+    intervaloHoraE1.classList.remove("vazio"); // Remove a classe de estilo "vazio" para mostrar que o intervalo foi registrado
+    
+    atualizarStatusCard("intervaloStatus", "Intervalo em andamento", "status-ativo"); // Atualiza o status do intervalo
+    document.getElementById("resumoIntervalo").textContent = formatarHora(inicioIntervalo); // Atualiza o resumo do intervalo
 
     atualizarBotoes(); // Atualiza os botões disponíveis
+    atualizarStatusGeral(); // Atualiza o status geral
 }
 
 function encerrarIntervalo() {
@@ -56,9 +64,10 @@ function encerrarIntervalo() {
     inicioContagem = fimIntervalo; // A contagem do tempo volta a partir do fim do intervalo
     estado = "trabalhando"; // Atualiza o estado para "trabalhando"
 
-    document.getElementById("intervaloStatus").textContent = "Intervalo encerrado"; // Atualiza o status do intervalo
+    atualizarStatusCard("intervaloStatus", "Intervalo encerrado", "status-concluido"); // Atualiza o status do intervalo
 
     atualizarBotoes(); // Atualiza os botões disponíveis
+    atualizarStatusGeral(); // Atualiza o status geral
 }
 
 function registrarSaida() {
@@ -68,12 +77,16 @@ function registrarSaida() {
     tempoAcumulado += saida - inicioContagem; // Acumula o tempo trabalhado até a saída
     estado = "encerrado"; // Atualiza o estado para "finalizado"
 
-    document.getElementById("saidaHora").textContent = formatarHora(saida); // Exibe o horário de saída
-    document.getElementById("saidaStatus").textContent = "Saída registrada"; // Atualiza o status da saída
+    const saidaHoraE1 = document.getElementById("saidaHora");
+    saidaHoraE1.textContent = formatarHora(saida); // Exibe o horário de saída
+    saidaHoraE1.classList.remove("vazio"); // Remove a classe de estilo "vazio" para mostrar que a saída foi registrada
+
+    atualizarStatusCard("saidaStatus", "Saída registrada", "status-concluido"); // Atualiza o status da saída
     document.getElementById("resumoSaida").textContent = formatarHora(saida); // Atualiza o resumo da saída
     document.getElementById("tempoTrabalhado").textContent = formatarTempo(tempoAcumulado); // Exibe o tempo total acumulado
 
     atualizarBotoes(); // Atualiza os botões disponíveis
+    atualizarStatusGeral(); // Atualiza o status geral
 }
 
 function atualizarTempoNaTela() {
@@ -126,3 +139,42 @@ function atualizarBotoes() {
     botaoSaida.disabled = true;
   }
 }
+
+function atualizarStatusGeral() {
+    const statusGeral = document.getElementById("statusGeral");
+
+    statusGeral.classList.remove(
+        "status-inicial",
+        "status-trabalhando",
+        "status-intervalo",
+        "status-encerrado"); // Remove todas as classes de status
+
+    if (estado === "inicial") {
+        statusGeral.textContent = "Aguardando Entrada";
+        statusGeral.classList.add("status-inicial");
+    }
+    else if (estado === "trabalhando") {
+        statusGeral.textContent = "Trabalhando";
+        statusGeral.classList.add("status-trabalhando");
+    }
+    else if (estado === "intervalo") {
+        statusGeral.textContent = "Em Intervalo";
+        statusGeral.classList.add("status-intervalo");
+    }
+    else if (estado === "encerrado") {
+        statusGeral.textContent = "Jornada Encerrada";
+        statusGeral.classList.add("status-encerrado");
+    }
+}
+
+function atualizarStatusCard (idElemento, texto, classeEstado) {
+    const elemento = document.getElementById(idElemento);
+
+    elemento.textContent = texto; // Atualiza o texto do status
+    elemento.classList.remove("status-aguardando", "status-ativo", "status-concluido"); // Remove todas as classes de status
+    elemento.classList.add(classeEstado); // Adiciona a classe do estado atual
+}
+
+atualizarBotoes(); // Configura os botões corretamente ao carregar a página
+atualizarStatusGeral(); // Configura o status geral corretamente ao carregar a página
+atualizarTempoNaTela(); // Atualiza o tempo trabalhado na tela ao carregar a página
