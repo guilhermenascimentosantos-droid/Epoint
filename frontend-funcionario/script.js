@@ -28,7 +28,7 @@ function registrarEntrada() {
     inicioContagem = entrada; // A contagem do tempo começa na entrada
     estado = "trabalhando"; // Atualiza o estado para "trabalhando"
 
-    document.getElementById("entrada").textContent = formatarHora(entrada); // Exibe o horário de entrada
+    document.getElementById("entradaHora").textContent = formatarHora(entrada); // Exibe o horário de entrada
     document.getElementById("entradaStatus").textContent = "Entrada registrada"; // Atualiza o status da entrada
     document.getElementById("resumoEntrada").textContent = formatarHora(entrada); // Atualiza o resumo da entrada
 
@@ -42,7 +42,7 @@ function registrarIntervalo() {
     tempoAcumulado += inicioIntervalo - inicioContagem; // Acumula o tempo trabalhado até o início do intervalo
     estado = "intervalo"; // Atualiza o estado para "intervalo"
 
-    document.getElementById("IntervaloHorario").textContent = formatarHora(inicioIntervalo); // Exibe o horário de início do intervalo
+    document.getElementById("intervaloHora").textContent = formatarHora(inicioIntervalo); // Exibe o horário de início do intervalo
     document.getElementById("intervaloStatus").textContent = "Intervalo em andamento";
     document.getElementById("resumoIntervalo").textContent = formatarHora(inicioIntervalo); // Atualiza o resumo do início do intervalo
 
@@ -91,28 +91,38 @@ setInterval(atualizarTempoNaTela, 1000); // Atualiza o tempo trabalhado a cada s
 function atualizarBotoes() {
   const botaoEntrada = document.getElementById("botaoEntrada");
   const botaoIntervalo = document.getElementById("botaoIntervalo");
-  const botaoFimIntervalo = document.getElementById("botaoFimIntervalo");
   const botaoSaida = document.getElementById("botaoSaida");
 
   if (estado === "inicial") {
     botaoEntrada.disabled = false;
     botaoIntervalo.disabled = true;
-    botaoFimIntervalo.disabled = true;
     botaoSaida.disabled = true;
-  } else if (estado === "trabalhando") {
+  
+    botaoIntervalo.textContent = "Registrar intervalo";
+    botaoIntervalo.onclick = registrarIntervalo;
+  }
+  
+    else if (estado === "trabalhando") {
     botaoEntrada.disabled = true;
     botaoIntervalo.disabled = false;
-    botaoFimIntervalo.disabled = true;
     botaoSaida.disabled = false;
-  } else if (estado === "intervalo") {
+
+    botaoIntervalo.textContent = "Registrar intervalo";
+    botaoIntervalo.onclick = registrarIntervalo;
+  }
+
+    else if (estado === "intervalo") {
     botaoEntrada.disabled = true;
-    botaoIntervalo.disabled = true;
-    botaoFimIntervalo.disabled = false;
+    botaoIntervalo.disabled = false;
     botaoSaida.disabled = true;
-  } else if (estado === "encerrado") {
+
+    botaoIntervalo.textContent = "Encerrar intervalo";
+    botaoIntervalo.onclick = encerrarIntervalo;
+  }
+
+    else if (estado === "encerrado") {
     botaoEntrada.disabled = true;
     botaoIntervalo.disabled = true;
-    botaoFimIntervalo.disabled = true;
     botaoSaida.disabled = true;
   }
 }
