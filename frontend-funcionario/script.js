@@ -14,9 +14,9 @@ function formatarHora(data) {
 
 function formatarTempo(ms) {
     const totalSegundos = Math.floor(ms / 1000);
-    const horas = Math.floor(totalSegundos / 3600) .padStart(2, '0');
-    const minutos = Math.floor((totalSegundos % 3600) / 60) .padStart(2, '0');
-    const segundos = (totalSegundos % 60) .padStart(2, '0');
+    const horas = String(Math.floor(totalSegundos / 3600)).padStart(2, '0');
+    const minutos = String(Math.floor((totalSegundos % 3600) / 60)).padStart(2, '0');
+    const segundos = String((totalSegundos % 60)).padStart(2, '0');
 
     return `${horas}:${minutos}:${segundos}`; // Formata o tempo acumulado no formato HH:MM:SS
 }
@@ -89,30 +89,30 @@ function atualizarTempoNaTela() {
 setInterval(atualizarTempoNaTela, 1000); // Atualiza o tempo trabalhado a cada segundo
 
 function atualizarBotoes() {
-    const botaoEntrada = document.getElementById("botaoEntrada");
-    const botaoIntervalo = document.getElementById("botaoIntervalo");
-    const botaoFimIntervalo = document.getElementById("botaoFimIntervalo");
-    const botaoSaida = document.getElementById("botaoSaida");
+  const botaoEntrada = document.getElementById("botaoEntrada");
+  const botaoIntervalo = document.getElementById("botaoIntervalo");
+  const botaoFimIntervalo = document.getElementById("botaoFimIntervalo");
+  const botaoSaida = document.getElementById("botaoSaida");
 
-    if (estado === "inicial") {
-        botaoEntrada.disabled = false;
-        botaoIntervalo.disabled = true;
-        botaoFimIntervalo.disabled = true;
-        botaoSaida.disabled = true;
-    } else if (estado === "trabalhando") {
-        botaoEntrada.disabled = true;
-        botaoIntervalo.disabled = false;
-        botaoFimIntervalo.disabled = false;
-        botaoSaida.disabled = true;
-    } else if (estado === "intervalo") {
-        botaoEntrada.disabled = true;
-        botaoIntervalo.disabled = true;
-        botaoFimIntervalo.disabled = false;
-        botaoSaida.disabled = true;
-    } else if (estado === "encerrado") {
-        botaoEntrada.disabled = true;
-        botaoIntervalo.disabled = true;
-        botaoFimIntervalo.disabled = true;
-        botaoSaida.disabled = false;
-    }
+  if (estado === "inicial") {
+    botaoEntrada.disabled = false;
+    botaoIntervalo.disabled = true;
+    botaoFimIntervalo.disabled = true;
+    botaoSaida.disabled = true;
+  } else if (estado === "trabalhando") {
+    botaoEntrada.disabled = true;
+    botaoIntervalo.disabled = false;
+    botaoFimIntervalo.disabled = true;
+    botaoSaida.disabled = false;
+  } else if (estado === "intervalo") {
+    botaoEntrada.disabled = true;
+    botaoIntervalo.disabled = true;
+    botaoFimIntervalo.disabled = false;
+    botaoSaida.disabled = true;
+  } else if (estado === "encerrado") {
+    botaoEntrada.disabled = true;
+    botaoIntervalo.disabled = true;
+    botaoFimIntervalo.disabled = true;
+    botaoSaida.disabled = true;
+  }
 }

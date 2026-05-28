@@ -38,7 +38,7 @@
 
             <div class="status" id="entradaStatus">Ainda não registrada</div>
 
-                <button class="botao-principal" onclick="registrarEntrada()">
+                <button class="botao-principal" id="botaoEntrada" onclick="registrarEntrada()">
                 Registrar entrada
                 </button>
             </div>
@@ -52,10 +52,22 @@
             <div class="hora-registro.vazio" id="intervaloHora">Aguardando...</div>
 
             <div class="status" id="intervaloStatus">Ainda não registrado</div>
-                <button class="botao-principal" onclick="registrarIntervalo()">
+                <button class="botao-principal" id="botaoIntervalo" onclick="registrarIntervalo()">
                 Registrar intervalo
                 </button>
         </div>
+
+        <div class="card acao-card">
+            <div class="card-tag">Fim do intervalo</div> <!-- Parte de "Fim do intervalo"-->
+                <h2>Retorno do intervalo</h2>
+                <p class="descricao">Marque o horário de retorno do intervalo.</p>
+
+            <div class="hora-registro.vazio" id="retornoIntervaloHora">Aguardando...</div>
+
+            <div class="status" id="retornoIntervaloStatus">Ainda não registrado</div>
+                <button class="botao-principal" id="botaoFimIntervalo" onclick="encerrarIntervalo()">
+                Registrar retorno do intervalo
+                </button>
 
         <div class="card acao-card">
             <div class="card-tag">Saída</div> <!-- Parte de "Saída"-->
@@ -66,7 +78,7 @@
             <div class="hora-registro.vazio" id="saidaHora">Aguardando...</div>
 
             <div class="status" id="saidaStatus">Ainda não registrada</div>
-                <button class="botao-principal" onclick="registrarSaida()">
+                <button class="botao-principal" id="botaoSaida" onclick="registrarSaida()">
                 Registrar saída
                 </button>
         </div>
@@ -100,5 +112,6 @@
     </section>
   </main>
 
+  <script src="script.js"></script> <!-- Link para o arquivo JavaScript que contém a lógica do site -->
 </body>
 </html>
