@@ -248,13 +248,28 @@ function verificarNovaJornada() {
   if (estado === "encerrado" && saida) {
     const historico = JSON.parse(localStorage.getItem("historicoJornadas")) || [];
 
+    const duracaoIntervaloMs =
+      inicioIntervalo && fimIntervalo
+        ? fimIntervalo - inicioIntervalo
+        : 0;
+
     historico.push({
+      id: crypto.randomUUID(),
+      data: entrada ? entrada.toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"),
+      dataISO: entrada ? entrada.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      funcionario: "Guilherme",
       entrada: entrada ? entrada.toISOString() : null,
       inicioIntervalo: inicioIntervalo ? inicioIntervalo.toISOString() : null,
       fimIntervalo: fimIntervalo ? fimIntervalo.toISOString() : null,
       saida: saida ? saida.toISOString() : null,
-      tempoAcumulado,
+      tempoTrabalhadoMs: tempoAcumulado,
+      tempoTrabalhadoFormatado: formatarTempo(tempoAcumulado),
+      duracaoIntervaloMs,
+      duracaoIntervaloFormatada: formatarTempo(duracaoIntervaloMs),
+      status: "encerrado",
+      criadoEm: new Date().toISOString()
     });
+
 
     localStorage.setItem("historicoJornadas", JSON.stringify(historico));
 
@@ -281,15 +296,86 @@ function limparInterface() {
     document.getElementById("saidaHora").textContent = "Aguardando...";
     document.getElementById("saidaHora").classList.add("vazio");
 
-    atualizarStatusCard("entradaStatus", "Aguardando entrada", "status-aguardando");
-    atualizarStatusCard("intervaloStatus", "Aguardando intervalo", "status-aguardando");
-    atualizarStatusCard("saidaStatus", "Aguardando saída", "status-aguardando");
+    atualizarStatusCard("entradaStatus", "Ainda não registrada", "status-aguardando");
+    atualizarStatusCard("intervaloStatus", "Ainda não registrado", "status-aguardando");
+    atualizarStatusCard("saidaStatus", "Ainda não registrada", "status-aguardando");
 
     document.getElementById("resumoEntrada").textContent = "Não registrado";
     document.getElementById("resumoIntervalo").textContent = "Não registrado";
     document.getElementById("resumoSaida").textContent = "Não registrado";
 
     document.getElementById("tempoTrabalhado").textContent = "00:00:00";
+}
+
+function formatarDataHoraLocal(dataIso) {
+  if (!dataIso) return "Não registrado";
+
+  return new Date(dataIso).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "medium"
+  });
+}
+
+function formatarHoraLocal(dataIso) {
+  if (!dataIso) return "Não registrado";
+
+  return new Date(dataIso).toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo"
+  });
+}
+
+function listarHistorico() {
+  const historicoSalvo = localStorage.getItem("historicoJornadas");
+
+  if (!historicoSalvo) return [];
+
+  try {
+    const historico = JSON.parse(historicoSalvo);
+
+    if (!Array.isArray(historico)) return [];
+
+    return historico
+      .sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm))
+      .map((registro) => ({
+        ...registro,
+        entradaFormatada: formatarHoraLocal(registro.entrada),
+        inicioIntervaloFormatado: formatarHoraLocal(registro.inicioIntervalo),
+        fimIntervaloFormatado: formatarHoraLocal(registro.fimIntervalo),
+        saidaFormatada: formatarHoraLocal(registro.saida),
+        criadoEmFormatado: formatarDataHoraLocal(registro.criadoEm)
+      }));
+  } catch (erro) {
+    console.error("Erro ao ler historicoJornadas:", erro);
+    return [];
+  }
+}
+
+function mostrarUltimoRegistro() {
+  const historico = listarHistorico();
+  return historico[historico.length - 1] || null;
+}
+
+function quantidadeRegistros() {
+  return listarHistorico().length;
+}
+
+function formatarDataHoraLocal(dataIso) {
+  if (!dataIso) return "Não registrado";
+
+  return new Date(dataIso).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "medium"
+  });
+}
+
+function formatarHoraLocal(dataIso) {
+  if (!dataIso) return "Não registrado";
+
+  return new Date(dataIso).toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo"
+  });
 }
 
 carregarDados(); // Tenta carregar os dados salvos ao iniciar a página
