@@ -37,7 +37,7 @@ function registrarEntrada() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
-    SalvarDados(); // Salva os dados no localStorage
+    salvarDados(); // Salva os dados no localStorage
 }
 
 function registrarIntervalo() {
@@ -56,7 +56,7 @@ function registrarIntervalo() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
-    SalvarDados(); // Salva os dados no localStorage
+    salvarDados(); // Salva os dados no localStorage
 }
 
 function encerrarIntervalo() {
@@ -70,7 +70,7 @@ function encerrarIntervalo() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
-    SalvarDados(); // Salva os dados no localStorage
+    salvarDados(); // Salva os dados no localStorage
 }
 
 function registrarSaida() {
@@ -90,7 +90,7 @@ function registrarSaida() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
-    SalvarDados(); // Salva os dados no localStorage
+    salvarDados(); // Salva os dados no localStorage
 }
 
 function atualizarTempoNaTela() {
@@ -179,8 +179,9 @@ function atualizarStatusCard (idElemento, texto, classeEstado) {
     elemento.classList.add(classeEstado); // Adiciona a classe do estado atual
 }
 
-function SalvarDados() {
+function salvarDados() {
     const dados = {
+        estado,
         entrada: entrada ? entrada.toISOString() : null,
         inicioIntervalo: inicioIntervalo ? inicioIntervalo.toISOString() : null,
         fimIntervalo: fimIntervalo ? fimIntervalo.toISOString() : null,
@@ -192,8 +193,8 @@ function SalvarDados() {
     localStorage.setItem("dadosJornada", JSON.stringify(dados)); // Salva os dados no localStorage
 }
 
-function CarregarDados() {
-    const dadosSalvos = localStorage.getItem("controlePonto");
+function carregarDados() {
+    const dadosSalvos = localStorage.getItem("dadosJornada");
 
     if (!dadosSalvos) return; // Se não houver dados salvos, sai da função
     
@@ -210,7 +211,90 @@ function CarregarDados() {
     // Atualiza a interface com os dados carregados
 }
 
+function restaurarInterface() {
+  if (entrada) {
+    const entradaHoraEl = document.getElementById("entradaHora");
+    entradaHoraEl.textContent = formatarHora(entrada);
+    entradaHoraEl.classList.remove("vazio");
+    atualizarStatusCard("entradaStatus", "Entrada registrada", "status-concluido");
+    document.getElementById("resumoEntrada").textContent = formatarHora(entrada);
+  }
+
+  if (inicioIntervalo) {
+    const intervaloHoraEl = document.getElementById("intervaloHora");
+    intervaloHoraEl.textContent = formatarHora(inicioIntervalo);
+    intervaloHoraEl.classList.remove("vazio");
+    document.getElementById("resumoIntervalo").textContent = formatarHora(inicioIntervalo);
+
+    if (estado === "intervalo") {
+      atualizarStatusCard("intervaloStatus", "Intervalo em andamento", "status-ativo");
+    } else {
+      atualizarStatusCard("intervaloStatus", "Intervalo encerrado", "status-concluido");
+    }
+  }
+
+  if (saida) {
+    const saidaHoraEl = document.getElementById("saidaHora");
+    saidaHoraEl.textContent = formatarHora(saida);
+    saidaHoraEl.classList.remove("vazio");
+    atualizarStatusCard("saidaStatus", "Saída registrada", "status-concluido");
+    document.getElementById("resumoSaida").textContent = formatarHora(saida);
+  }
+
+  document.getElementById("tempoTrabalhado").textContent = formatarTempo(tempoAcumulado);
+}
+
+function verificarNovaJornada() {
+  if (estado === "encerrado" && saida) {
+    const historico = JSON.parse(localStorage.getItem("historicoJornadas")) || [];
+
+    historico.push({
+      entrada: entrada ? entrada.toISOString() : null,
+      inicioIntervalo: inicioIntervalo ? inicioIntervalo.toISOString() : null,
+      fimIntervalo: fimIntervalo ? fimIntervalo.toISOString() : null,
+      saida: saida ? saida.toISOString() : null,
+      tempoAcumulado,
+    });
+
+    localStorage.setItem("historicoJornadas", JSON.stringify(historico));
+
+    entrada = null;
+    inicioIntervalo = null;
+    fimIntervalo = null;
+    saida = null;
+    tempoAcumulado = 0;
+    inicioContagem = null;
+    estado = "inicial";
+
+    salvarDados();
+    limparInterface();
+  }
+}
+
+function limparInterface() {
+    document.getElementById("entradaHora").textContent = "Aguardando...";
+    document.getElementById("entradaHora").classList.add("vazio");
+
+    document.getElementById("intervaloHora").textContent = "Aguardando...";
+    document.getElementById("intervaloHora").classList.add("vazio");
+
+    document.getElementById("saidaHora").textContent = "Aguardando...";
+    document.getElementById("saidaHora").classList.add("vazio");
+
+    atualizarStatusCard("entradaStatus", "Aguardando entrada", "status-aguardando");
+    atualizarStatusCard("intervaloStatus", "Aguardando intervalo", "status-aguardando");
+    atualizarStatusCard("saidaStatus", "Aguardando saída", "status-aguardando");
+
+    document.getElementById("resumoEntrada").textContent = "Não registrado";
+    document.getElementById("resumoIntervalo").textContent = "Não registrado";
+    document.getElementById("resumoSaida").textContent = "Não registrado";
+
+    document.getElementById("tempoTrabalhado").textContent = "00:00:00";
+}
+
 carregarDados(); // Tenta carregar os dados salvos ao iniciar a página
+verificarNovaJornada(); // Verifica se é necessário iniciar uma nova jornada
+restaurarInterface(); // Restaura a interface com os dados carregados
 atualizarBotoes(); // Configura os botões corretamente ao carregar a página
 atualizarStatusGeral(); // Configura o status geral corretamente ao carregar a página
 atualizarTempoNaTela(); // Atualiza o tempo trabalhado na tela ao carregar a página
