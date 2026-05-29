@@ -37,6 +37,7 @@ function registrarEntrada() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
+    SalvarDados(); // Salva os dados no localStorage
 }
 
 function registrarIntervalo() {
@@ -55,6 +56,7 @@ function registrarIntervalo() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
+    SalvarDados(); // Salva os dados no localStorage
 }
 
 function encerrarIntervalo() {
@@ -68,6 +70,7 @@ function encerrarIntervalo() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
+    SalvarDados(); // Salva os dados no localStorage
 }
 
 function registrarSaida() {
@@ -87,6 +90,7 @@ function registrarSaida() {
 
     atualizarBotoes(); // Atualiza os botões disponíveis
     atualizarStatusGeral(); // Atualiza o status geral
+    SalvarDados(); // Salva os dados no localStorage
 }
 
 function atualizarTempoNaTela() {
@@ -175,6 +179,38 @@ function atualizarStatusCard (idElemento, texto, classeEstado) {
     elemento.classList.add(classeEstado); // Adiciona a classe do estado atual
 }
 
+function SalvarDados() {
+    const dados = {
+        entrada: entrada ? entrada.toISOString() : null,
+        inicioIntervalo: inicioIntervalo ? inicioIntervalo.toISOString() : null,
+        fimIntervalo: fimIntervalo ? fimIntervalo.toISOString() : null,
+        saida: saida ? saida.toISOString() : null,
+        tempoAcumulado, 
+        inicioContagem: inicioContagem ? inicioContagem.toISOString() : null,
+    };
+
+    localStorage.setItem("dadosJornada", JSON.stringify(dados)); // Salva os dados no localStorage
+}
+
+function CarregarDados() {
+    const dadosSalvos = localStorage.getItem("controlePonto");
+
+    if (!dadosSalvos) return; // Se não houver dados salvos, sai da função
+    
+    const dados = JSON.parse(dadosSalvos);
+    
+    estado = dados.estado || "inicial";
+    entrada = dados.entrada ? new Date(dados.entrada) : null;
+    inicioIntervalo = dados.inicioIntervalo ? new Date(dados.inicioIntervalo) : null;
+    fimIntervalo = dados.fimIntervalo ? new Date(dados.fimIntervalo) : null;
+    saida = dados.saida ? new Date(dados.saida) : null;
+    tempoAcumulado = dados.tempoAcumulado || 0;
+    inicioContagem = dados.inicioContagem ? new Date(dados.inicioContagem) : null;
+
+    // Atualiza a interface com os dados carregados
+}
+
+carregarDados(); // Tenta carregar os dados salvos ao iniciar a página
 atualizarBotoes(); // Configura os botões corretamente ao carregar a página
 atualizarStatusGeral(); // Configura o status geral corretamente ao carregar a página
 atualizarTempoNaTela(); // Atualiza o tempo trabalhado na tela ao carregar a página
