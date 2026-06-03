@@ -255,8 +255,8 @@ function verificarNovaJornada() {
 
     historico.push({
       id: crypto.randomUUID(),
-      data: entrada ? entrada.toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"),
-      dataISO: entrada ? entrada.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      data: saida ? saida.toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"),
+      dataISO: saida ? formatarDataISOlocal(saida) : formatarDataISOlocal(new Date()),
       funcionario: "Guilherme",
       entrada: entrada ? entrada.toISOString() : null,
       inicioIntervalo: inicioIntervalo ? inicioIntervalo.toISOString() : null,
@@ -270,6 +270,55 @@ function verificarNovaJornada() {
       criadoEm: new Date().toISOString()
     });
 
+
+    localStorage.setItem("historicoJornadas", JSON.stringify(historico));
+
+    entrada = null;
+    inicioIntervalo = null;
+    fimIntervalo = null;
+    saida = null;
+    tempoAcumulado = 0;
+    inicioContagem = null;
+    estado = "inicial";
+
+    salvarDados();
+    limparInterface();
+  }
+}
+
+function formatarDataISOlocal(data) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+function verificarNovaJornada() {
+  if (estado === "encerrado" && saida) {
+    const historico = JSON.parse(localStorage.getItem("historicoJornadas")) || [];
+
+    const duracaoIntervaloMs =
+      inicioIntervalo && fimIntervalo
+        ? fimIntervalo - inicioIntervalo
+        : 0;
+
+    historico.push({
+      id: crypto.randomUUID(),
+      data: saida ? saida.toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"),
+      dataISO: saida ? formatarDataISOlocal(saida) : formatarDataISOlocal(new Date()),
+      funcionario: "Guilherme",
+      entrada: entrada ? entrada.toISOString() : null,
+      inicioIntervalo: inicioIntervalo ? inicioIntervalo.toISOString() : null,
+      fimIntervalo: fimIntervalo ? fimIntervalo.toISOString() : null,
+      saida: saida ? saida.toISOString() : null,
+      tempoTrabalhadoMs: tempoAcumulado,
+      tempoTrabalhadoFormatado: formatarTempo(tempoAcumulado),
+      duracaoIntervaloMs,
+      duracaoIntervaloFormatada: formatarTempo(duracaoIntervaloMs),
+      status: "encerrado",
+      criadoEm: new Date().toISOString()
+    });
 
     localStorage.setItem("historicoJornadas", JSON.stringify(historico));
 

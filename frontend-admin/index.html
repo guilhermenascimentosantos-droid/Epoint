@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Epoint Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="admin-layout">
+
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">E</div>
+        <div class="brand-texto">
+          <strong>Epoint</strong>
+          <span>Painel administrativo</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 13h7V4H4v9Zm0 7h7v-5H4v5Zm9 0h7v-9h-7v9Zm0-16v5h7V4h-7Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="#" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9.5" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M20 8v6M23 11h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Funcionários</span>
+        </a>
+
+        <a href="#" class="nav-item ativo">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 9v4l2.5 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 3v2M5.64 5.64l1.41 1.41M3 12h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Registros</span>
+        </a>
+
+        <a href="#" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M14 2v6h6M8 13h8M8 17h5M8 9h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Relatórios</span>
+        </a>
+
+        <a href="#" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82L4.21 7.2a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10 3.25V3a2 2 0 1 1 4 0v.09c0 .69.4 1.31 1.03 1.59h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.48.48-.62 1.2-.33 1.82v.01c.27.63.89 1.03 1.58 1.03H21a2 2 0 1 1 0 4h-.25c-.69 0-1.31.4-1.59 1.03V15Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Configurações</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="botao-sidebar">Sair</button>
+      </div>
+    </aside>
+
+    <section class="admin-main">
+      <header class="admin-header">
+        <div class="header-texto">
+          <span class="header-label">Empresa</span>
+          <h1>Registros de ponto</h1>
+          <p>Visualize e acompanhe as jornadas registradas de forma simples.</p>
+        </div>
+
+        <div class="header-acoes">
+          <div class="header-busca">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="text" placeholder="Pesquisar funcionário ou registro" />
+          </div>
+
+          <div class="perfil-admin">
+            <div class="perfil-avatar">A</div>
+            <div class="perfil-info">
+              <strong>Admin</strong>
+              <span>Administrador</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="admin-kpis">
+        <article class="kpi-card">
+            <span class="kpi-label">Registros de hoje</span>
+            <strong class="kpi-valor" id="totalRegistros">0</strong>
+            <small class="kpi-ajuda">Jornadas registradas hoje</small>
+        </article>
+
+        <article class="kpi-card">
+            <span class="kpi-label">Funcionários ativos</span>
+            <strong class="kpi-valor" id="registrosCompletos">0</strong>
+            <small class="kpi-ajuda">Em jornada ativa agora</small>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-label">Última jornada</span>
+          <strong class="kpi-valor kpi-valor-menor" id="ultimaJornada">Não registrada</strong>
+          <small class="kpi-ajuda">Último registro arquivado</small>
+        </article>
+      </section>
+
+      <section class="admin-bloco">
+        <div class="bloco-topo">
+            <div>
+                <span class="bloco-tag">Filtros</span>
+                <h2>Buscar registros</h2>
+                <p>Use filtros simples para localizar registros mais rápido.</p>
+            </div>
+            </div>
+
+        <div class="filtros-grid">
+          <div class="campo">
+            <label for="filtroBusca">Funcionário</label>
+            <input id="filtroBusca" type="text" placeholder="Ex.: Guilherme" />
+          </div>
+
+          <div class="campo">
+            <label for="filtroData">Data</label>
+            <input id="filtroData" type="date" />
+          </div>
+
+          <div class="campo campo-menor">
+            <label for="filtroStatus">Status</label>
+            <select id="filtroStatus">
+              <option value="">Todos</option>
+              <option value="encerrado">Encerrado</option>
+              <option value="intervalo">Em intervalo</option>
+              <option value="trabalhando">Trabalhando</option>
+            </select>
+          </div>
+
+          <div class="filtros-botoes">
+            <button class="botao-principal" id="botaoFiltrar">Filtrar</button>
+            <button class="botao-secundario" id="botaoLimpar">Limpar</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-bloco">
+        <div class="bloco-topo">
+          <div>
+            <span class="bloco-tag">Tabela</span>
+            <h2>Todos os registros</h2>
+            <p>Histórico consolidado das jornadas finalizadas.</p>
+          </div>
+        </div>
+
+        <div class="tabela-wrapper">
+          <table class="tabela-admin">
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Data</th>
+                <th>Entrada</th>
+                <th>Intervalo</th>
+                <th>Retorno</th>
+                <th>Saída</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody id="tabelaHistorico">
+              <tr>
+                <td colspan="8" class="tabela-vazia">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
