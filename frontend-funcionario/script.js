@@ -1,3 +1,35 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const supabaseUrl = 'https://kyrsdgeuefwmzhmqjmhb.supabase.co/rest/v1/';
+const supabaseKey = 'sb_publishable_XSfOnwIO8Aj0YAf2q92yEQ_KWkTKRW5';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function fazerLogin(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    console.error('Erro no login:', error.message);
+    alert('Login inválido: ' + error.message);
+    return null;
+  }
+
+  return data.user;
+}
+
+async function obterUsuarioAtual() {
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error('Erro ao obter usuário:', error.message);
+    return null;
+  }
+
+  return data.user;
+}
+
 let entrada = null; // Variável para armazenar o horário de entrada
 let inicioIntervalo = null; // Variável para armazenar o horário de início do intervalo
 let fimIntervalo = null; // Variável para armazenar o horário de fim do intervalo
@@ -433,3 +465,11 @@ restaurarInterface(); // Restaura a interface com os dados carregados
 atualizarBotoes(); // Configura os botões corretamente ao carregar a página
 atualizarStatusGeral(); // Configura o status geral corretamente ao carregar a página
 atualizarTempoNaTela(); // Atualiza o tempo trabalhado na tela ao carregar a página
+
+window.fazerLogin = fazerLogin;
+window.obterUsuarioAtual = obterUsuarioAtual;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const user = await obterUsuarioAtual();
+  console.log('Usuário logado ao abrir a página:', user);
+});
