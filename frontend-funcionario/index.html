@@ -27,81 +27,73 @@
             <div class="topo-direita"></div>
 </header>
 
-    <section class="conteudo"> <!-- Seção para os cards de ações e resumo, usando grid para layout -->
-        <div class="card acao-card">
-            <div class="card-tag">Entrada</div> <!-- Parte de "Entrada"-->
+    <main class="conteudo">
+  <section class="card acao-card">
+    <span class="card-tag">Entrada</span>
+    <h2>Início do expediente</h2>
+    <p class="descricao">Marque o horário de entrada.</p>
+    <div id="horaEntrada" class="hora-registro vazio">Aguardando...</div>
+    <p id="statusEntrada" class="status status-aguardando">Ainda não registrada</p>
+    <button id="btnEntrada" class="botao-principal">Registrar entrada</button>
+  </section>
 
-                <h2>Início do expediente</h2>
-                <p class="descricao">Marque o horário de entrada.</p>
+  <section class="card acao-card">
+    <span class="card-tag">Intervalo</span>
+    <h2>Pausa do expediente</h2>
+    <p class="descricao">Marque o horário do intervalo.</p>
+    <div id="horaIntervalo" class="hora-registro vazio">Aguardando...</div>
+    <p id="statusIntervalo" class="status status-aguardando">Ainda não registrado</p>
+    <button id="btnIntervalo" class="botao-principal" disabled>Registrar intervalo</button>
+  </section>
 
-            <div class="hora-registro vazio" id="entradaHora">Aguardando...</div>
+  <section class="card acao-card">
+    <span class="card-tag">Saída</span>
+    <h2>Fim do expediente</h2>
+    <p class="descricao">Marque o horário de saída.</p>
+    <div id="horaSaida" class="hora-registro vazio">Aguardando...</div>
+    <p id="statusSaida" class="status status-aguardando">Ainda não registrada</p>
+    <button id="btnSaida" class="botao-principal" disabled>Registrar saída</button>
+  </section>
 
-            <div class="status status-aguardando" id="entradaStatus">Ainda não registrada</div>
+  <section class="card card-resumo">
+    <div id="statusGeral" class="status-geral status-inicial">Aguardando entrada</div>
 
-                <button class="botao-principal" id="botaoEntrada" onclick="registrarEntrada()">
-                Registrar entrada
-                </button>
-            </div>
+    <span class="card-tag">Tempo trabalhado</span>
+    <h2>Total do dia</h2>
+    <div id="relogioTotal" class="relogio-total">00:00:00</div>
 
-        <div class="card acao-card">
-            <div class="card-tag">Intervalo</div> <!-- Parte de "Intervalo"-->
+    <div class="resumo-linha">
+      <span>Entrada</span>
+      <strong id="resumoEntrada">Não registrado</strong>
+    </div>
 
-                <h2>Pausa do expediente</h2>
-                <p class="descricao">Marque o horário do intervalo.</p>
+    <div class="resumo-linha">
+      <span>Intervalo</span>
+      <strong id="resumoIntervalo">Não registrado</strong>
+    </div>
 
-            <div class="hora-registro vazio" id="intervaloHora">Aguardando...</div>
+    <div class="resumo-linha">
+      <span>Saída</span>
+      <strong id="resumoSaida">Não registrado</strong>
+    </div>
+  </section>
+</main>
 
-            <div class="status status-aguardando" id="intervaloStatus">Ainda não registrado</div>
-                <button class="botao-principal" id="botaoIntervalo" onclick="registrarIntervalo()">
-                Registrar intervalo
-                </button>
-        </div>
+<section class="card card-historico">
+  <div class="historico-header">
+    <div>
+      <span class="card-tag">Histórico</span>
+      <h2>Jornadas registradas</h2>
+      <p class="descricao">Acompanhe seus últimos registros de ponto salvos no sistema.</p>
+    </div>
+  </div>
 
-        <div class="card acao-card">
-            <div class="card-tag">Saída</div> <!-- Parte de "Saída"-->
-
-                <h2>Fim do expediente</h2>
-                <p class="descricao">Marque o horário de saída.</p>
-                    
-            <div class="hora-registro vazio" id="saidaHora">Aguardando...</div>
-
-            <div class="status status-aguardando" id="saidaStatus">Ainda não registrada</div>
-                <button class="botao-principal" id="botaoSaida" onclick="registrarSaida()">
-                Registrar saída
-                </button>
-        </div>
-
-        <div class="card card-resumo">
-
-            <div class="status-geral" id="statusGeral">Aguardando Entrada</div>
-
-            <div class="card-tag">Tempo trabalhado</div> <!-- Parte de "Tempo trabalhado"-->
-
-
-            <h2>Total do dia</h2>
-
-            <div class="relogio-total" id="tempoTrabalhado">00:00:00</div>
-
-            <div class="resumo-linha">
-            <span>Entrada</span>
-            <strong id="resumoEntrada">Não registrado</strong>
-            </div>
-
-            <div class="resumo-linha">
-            <span>Intervalo</span>
-            <strong id="resumoIntervalo">Não registrado</strong>
-            </div>
-
-            <div class="resumo-linha">
-            <span>Saída</span>
-            <strong id="resumoSaida">Não registrado</strong>
-            </div>
+  <div id="historicoContainer" class="historico-container">
+    <div class="historico-vazio">
+      <p>Carregando histórico...</p>
+    </div>
   </div>
 </section>
-
-
-        </div>
-      </section>
 
     </section>
   </main>
