@@ -4,6 +4,15 @@ const supabaseUrl = 'https://kyrsdgeuefwmzhmqjmhb.supabase.co';
 const supabaseKey = 'sb_publishable_XSfOnwIO8Aj0YAf2q92yEQ_KWkTKRW5';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+const telaLogin = document.getElementById('telaLogin');
+const telaApp = document.getElementById('telaApp');
+const formLogin = document.getElementById('formLogin');
+const emailLogin = document.getElementById('emailLogin');
+const senhaLogin = document.getElementById('senhaLogin');
+const mensagemLogin = document.getElementById('mensagemLogin');
+const nomeUsuario = document.getElementById('nomeUsuario');
+const btnLogout = document.getElementById('btnLogout');
+
 const horaEntradaEl = document.getElementById('horaEntrada');
 const statusEntradaEl = document.getElementById('statusEntrada');
 const btnEntrada = document.getElementById('btnEntrada');
@@ -101,6 +110,54 @@ function pararRelogio() {
 function aplicarClasseVazia(elemento, temValor) {
   if (!elemento) return;
   elemento.classList.toggle('vazio', !temValor);
+}
+
+
+async function inicializarSessao() {
+  const user = await obterUsuarioAtual();
+
+  if (!user) {
+    mostrarLogin();
+    return;
+  }
+
+  if (nomeUsuario) {
+    nomeUsuario.textContent = user.email || 'Usuário logado';
+  }
+
+  mostrarApp();
+  await carregarEstadoAtual();
+  await renderizarHistorico();
+}
+
+
+if (formLogin) {
+  formLogin.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const email = emailLogin?.value?.trim();
+    const senha = senhaLogin?.value ?? '';
+
+    if (mensagemLogin) mensagemLogin.textContent = '';
+
+    const user = await fazerLogin(email, senha);
+
+    if (!user) {
+      if (mensagemLogin) {
+        mensagemLogin.textContent = 'Email ou senha inválidos.';
+      }
+      return;
+    }
+
+    if (nomeUsuario) {
+      nomeUsuario.textContent = user.email || 'Usuário logado';
+    }
+
+    formLogin.reset();
+    mostrarApp();
+    await carregarEstadoAtual();
+    await renderizarHistorico();
+  });
 }
 
 function atualizarResumo() {
@@ -265,6 +322,38 @@ async function obterUsuarioAtual() {
   }
 
   return data.user;
+}
+
+function mostrarLogin() {
+  if (telaLogin) telaLogin.classList.remove('escondido');
+  if (telaApp) telaApp.classList.add('escondido');
+}
+
+function mostrarApp() {
+  if (telaLogin) telaLogin.classList.add('escondido');
+  if (telaApp) telaApp.classList.remove('escondido');
+}
+
+async function fazerLogout() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert('Erro ao sair: ' + error.message);
+    return;
+  }
+
+  jornadaAtual = null;
+  tempoAcumulado = 0;
+  inicioContagem = null;
+  inicioIntervalo = null;
+  fimIntervalo = null;
+
+  atualizarStatusVisual();
+  mostrarLogin();
+
+  if (mensagemLogin) mensagemLogin.textContent = '';
+  if (formLogin) formLogin.reset();
+  if (nomeUsuario) nomeUsuario.textContent = 'Carregando...';
 }
 
 async function obterEmpresaDoUsuario(userId) {
@@ -695,4 +784,12 @@ btnSaida?.addEventListener('click', async () => {
   }
 });
 
-carregarEstadoAtual();
+if (btnLogout) {
+  btnLogout.addEventListener('click', async () => {
+    await fazerLogout();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await inicializarSessao();
+});

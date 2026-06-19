@@ -8,10 +8,56 @@
 </head>
 <body>
 
-  <main class="app"> <!-- Container principal do aplicativo -->
-    <section class="painel"> <!-- Painel centralizado para o conteúdo principal -->
+  <main class="app">
+    
+    <section id="telaLogin" class="auth-card">
+  <div class="auth-header">
+    <h1>Entrar</h1>
+    <p>Use seu email e senha para acessar o painel do funcionário.</p>
+  </div>
+
+  <form id="formLogin" class="auth-form">
+    <label for="emailLogin">Email</label>
+    <input
+      type="email"
+      id="emailLogin"
+      name="email"
+      placeholder="seuemail@empresa.com"
+      required
+    />
+
+    <label for="senhaLogin">Senha</label>
+    <input
+      type="password"
+      id="senhaLogin"
+      name="senha"
+      placeholder="Digite sua senha"
+      required
+    />
+
+    <button type="submit" class="botao-principal">Entrar</button>
+    <p id="mensagemLogin" class="mensagem-login"></p>
+  </form>
+</section>
+
+
+    <!-- Container principal do aplicativo -->
+    <section id="telaApp" class="escondido"> <!-- Painel centralizado para o conteúdo principal -->
 
         <header class="topo">
+
+            <div class="topo-direita">
+                <div class="usuario">
+                  <span>Usuário logado</span>
+                  <strong id="nomeUsuario">Carregando...</strong>
+                </div>
+
+                <button id="btnLogout" type="button" class="botao-secundario">
+                  Sair
+                </button>
+            </div>
+
+
             <div class="topo-esquerda">
                 <div class="usuario"> <!-- Parte do perfil do usuário, pode ser expandida futuramente para incluir foto, etc.-->
                 <span>Usuário</span>
