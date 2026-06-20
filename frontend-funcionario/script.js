@@ -149,6 +149,21 @@ if (formLogin) {
       return;
     }
 
+    const membro = await obterEmpresaDoUsuario(user.id);
+
+    if (!membro) {
+      if (mensagemLogin) {
+        mensagemLogin.textContent = 'Usuário sem vínculo ativo com empresa.';
+      }
+      await fazerLogout();
+      return;
+    }
+
+    if (membro.papel === 'admin') {
+      window.location.href = '../frontend-admin/index.html';
+      return;
+    }
+
     if (nomeUsuario) {
       nomeUsuario.textContent = user.email || 'Usuário logado';
     }

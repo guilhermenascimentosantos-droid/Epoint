@@ -1,3 +1,66 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const supabaseUrl = 'https://kyrsdgeuefwmzhmqjmhb.supabase.co';
+const supabaseKey = 'sb_publishable_XSfOnwIO8Aj0YAf2q92yEQ_KWkTKRW5';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+let usuarioAtual = null;
+let membroAtual = null;
+
+async function obterUsuarioAtual() {
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error('Erro ao obter usuário:', error.message);
+    return null;
+  }
+
+  return data.user;
+}
+
+async function obterEmpresaDoUsuario(userId) {
+  const { data, error } = await supabase
+    .from('membros_empresa')
+    .select('empresa_id, papel, ativo')
+    .eq('user_id', userId)
+    .eq('ativo', true)
+    .single();
+
+  if (error) {
+    console.error('Erro ao buscar empresa do usuário:', error.message);
+    return null;
+  }
+
+  return data;
+}
+
+async function inicializarAdmin() {
+  usuarioAtual = await obterUsuarioAtual();
+
+  if (!usuarioAtual) {
+    alert('Nenhum usuário logado no admin.');
+    return;
+  }
+
+  membroAtual = await obterEmpresaDoUsuario(usuarioAtual.id);
+
+  if (!membroAtual) {
+    alert('Usuário não está vinculado a uma empresa ativa.');
+    return;
+  }
+
+  console.log('Usuário admin carregado:', usuarioAtual.email);
+  console.log('Membro atual:', membroAtual);
+
+  const registros = await listarHistoricoAdmin();
+  console.log('Registros carregados:', registros);
+
+  atualizarKPIs(registros);
+  renderizarTabela(registros);
+}
+
+document.addEventListener('DOMContentLoaded', inicializarAdmin);
+
 function lerHistoricoBruto() {
   const historicoSalvo = localStorage.getItem("historicoJornadas");
 
@@ -74,56 +137,40 @@ function textoStatus(status) {
   return "Sem status";
 }
 
-function listarHistoricoAdmin() {
-  const historico = lerHistoricoBruto();
-  const jornadaAtual = lerJornadaAtual();
-
-  const registrosHistoricos = historico
-    .slice()
-    .sort((a, b) => new Date(b.criadoEm || 0) - new Date(a.criadoEm || 0))
-    .map((registro) => ({
-      ...registro,
-      funcionario: registro.funcionario || "Não informado",
-      dataExibicao: formatarDataLocal(registro.entrada, registro.data),
-      entradaFormatada: formatarHoraLocal(registro.entrada),
-      intervaloFormatado: formatarHoraLocal(registro.inicioIntervalo),
-      retornoFormatado: formatarHoraLocal(registro.fimIntervalo),
-      saidaFormatada: formatarHoraLocal(registro.saida),
-      totalFormatado: registro.tempoTrabalhadoFormatado || "00:00:00",
-      statusNormalizado: normalizarStatus(registro.status),
-      statusTexto: textoStatus(normalizarStatus(registro.status))
-    }));
-
-  const jornadaAberta =
-    jornadaAtual &&
-    jornadaAtual.estado &&
-    jornadaAtual.estado !== "inicial" &&
-    jornadaAtual.estado !== "encerrado";
-
-  if (jornadaAberta) {
-    const agora = new Date();
-    let tempoAtual = jornadaAtual.tempoAcumulado || 0;
-
-    if (jornadaAtual.estado === "trabalhando" && jornadaAtual.inicioContagem) {
-      tempoAtual += agora - new Date(jornadaAtual.inicioContagem);
-    }
-
-    registrosHistoricos.unshift({
-      id: "jornada-atual",
-      funcionario: "Guilherme",
-      dataExibicao: formatarDataLocal(jornadaAtual.entrada, null),
-      entradaFormatada: formatarHoraLocal(jornadaAtual.entrada),
-      intervaloFormatado: formatarHoraLocal(jornadaAtual.inicioIntervalo),
-      retornoFormatado: formatarHoraLocal(jornadaAtual.fimIntervalo),
-      saidaFormatada: "—",
-      totalFormatado: formatarTempo(tempoAtual),
-      statusNormalizado: normalizarStatus(jornadaAtual.estado),
-      statusTexto: textoStatus(normalizarStatus(jornadaAtual.estado)),
-      dataISO: jornadaAtual.entrada
-        ? new Date(jornadaAtual.entrada).toISOString().split("T")[0]
-        : ""
-    });
+async function listarHistoricoAdmin() {
+  if (!usuarioAtual || !membroAtual?.empresa_id) {
+    console.log('Sem usuário atual ou empresa_id');
+    return [];
   }
+
+  console.log('empresa_id do admin:', membroAtual.empresa_id);
+
+  const { data, error } = await supabase
+    .from('jornadas')
+    .select('*')
+    .eq('empresa_id', membroAtual.empresa_id)
+    .order('entrada', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar jornadas da empresa:', error);
+    return [];
+  }
+
+  console.log('Jornadas brutas retornadas:', data);
+
+  const registrosHistoricos = (data || []).map((registro) => ({
+    ...registro,
+    funcionario: registro.user_id || 'Não informado',
+    dataISO: registro.data || (registro.entrada ? new Date(registro.entrada).toISOString().split('T')[0] : ''),
+    dataExibicao: formatarDataLocal(registro.entrada, registro.data),
+    entradaFormatada: formatarHoraLocal(registro.entrada),
+    intervaloFormatado: formatarHoraLocal(registro.inicio_intervalo),
+    retornoFormatado: formatarHoraLocal(registro.fim_intervalo),
+    saidaFormatada: formatarHoraLocal(registro.saida),
+    totalFormatado: formatarTempo(registro.tempo_trabalhado_ms || 0),
+    statusNormalizado: normalizarStatus(registro.status),
+    statusTexto: textoStatus(normalizarStatus(registro.status))
+  }));
 
   return registrosHistoricos;
 }
@@ -263,12 +310,12 @@ function traduzirEstadoAtual(estado) {
   return "Aguardando entrada";
 }
 
-function atualizarPainelAdmin() {
-  const registros = listarHistoricoAdmin();
+ async function atualizarPainelAdmin() {
+  const registros = await listarHistoricoAdmin();
   const registrosFiltrados = aplicarFiltros(registros);
 
   atualizarKPIs(registros);
-    atualizarStatusAtual();
+  atualizarStatusAtual();
   renderizarTabela(registrosFiltrados);
 }
 
