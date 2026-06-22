@@ -59,7 +59,6 @@ async function inicializarAdmin() {
   renderizarTabela(registros);
 }
 
-document.addEventListener('DOMContentLoaded', inicializarAdmin);
 
 function lerHistoricoBruto() {
   const historicoSalvo = localStorage.getItem("historicoJornadas");
@@ -288,6 +287,26 @@ function traduzirEstadoAtual(estado) {
   return "Aguardando entrada";
 }
 
+aasync function fazerLogoutAdmin() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert('Erro ao sair: ' + error.message);
+    return;
+  }
+
+  window.location.href = '../frontend-funcionario/index.html';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  inicializarAdmin();
+
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', fazerLogoutAdmin);
+  }
+});
+
 function atualizarStatusAtual() {
   const jornadaAtual = lerJornadaAtual();
 
@@ -365,6 +384,7 @@ function configurarEventos() {
   });
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
   configurarEventos();
   atualizarPainelAdmin();
@@ -373,3 +393,5 @@ document.addEventListener("DOMContentLoaded", () => {
 setInterval(() => {
   atualizarPainelAdmin();
 }, 1000);
+
+
