@@ -13,6 +13,38 @@ const mensagemLogin = document.getElementById('mensagemLogin');
 const nomeUsuario = document.getElementById('nomeUsuario');
 const btnLogout = document.getElementById('btnLogout');
 
+async function redirecionarPorPerfil(user) {
+  if (!user) {
+    mostrarLogin();
+    return;
+  }
+
+  const membro = await obterEmpresaDoUsuario(user.id);
+
+  if (!membro) {
+    if (mensagemLogin) {
+      mensagemLogin.textContent = 'Usuário sem vínculo ativo com empresa.';
+    }
+    await fazerLogout();
+    return;
+  }
+
+  const papel = (membro.papel || '').toString().trim().toLowerCase();
+
+  if (papel === 'admin') {
+    window.location.href = '../frontend-admin/index.html';
+    return;
+  }
+
+  if (nomeUsuario) {
+    nomeUsuario.textContent = user.email || 'Usuário logado';
+  }
+
+  mostrarApp();
+  await carregarEstadoAtual();
+  await renderizarHistorico();
+}
+
 const horaEntradaEl = document.getElementById('horaEntrada');
 const statusEntradaEl = document.getElementById('statusEntrada');
 const btnEntrada = document.getElementById('btnEntrada');
@@ -121,13 +153,7 @@ async function inicializarSessao() {
     return;
   }
 
-  if (nomeUsuario) {
-    nomeUsuario.textContent = user.email || 'Usuário logado';
-  }
-
-  mostrarApp();
-  await carregarEstadoAtual();
-  await renderizarHistorico();
+  await redirecionarPorPerfil(user);
 }
 
 
@@ -149,54 +175,9 @@ if (formLogin) {
       return;
     }
 
-    const membro = await obterEmpresaDoUsuario(user.id);
-
-    if (!membro) {
-      if (mensagemLogin) {
-        mensagemLogin.textContent = 'Usuário sem vínculo ativo com empresa.';
-      }
-      await fazerLogout();
-      return;
-    }
-
-    if (membro.papel === 'admin') {
-      window.location.href = '../frontend-admin/index.html';
-      return;
-    }
-
-    if (nomeUsuario) {
-      nomeUsuario.textContent = user.email || 'Usuário logado';
-    }
-
     formLogin.reset();
-    mostrarApp();
-    await carregarEstadoAtual();
-    await renderizarHistorico();
+    await redirecionarPorPerfil(user);
   });
-}
-
-function atualizarResumo() {
-  if (resumoEntradaEl) {
-    resumoEntradaEl.textContent = jornadaAtual?.entrada
-      ? formatarHora(jornadaAtual.entrada)
-      : 'Não registrado';
-  }
-
-  if (resumoIntervaloEl) {
-    if (jornadaAtual?.inicio_intervalo && jornadaAtual?.fim_intervalo) {
-      resumoIntervaloEl.textContent = `${formatarHora(jornadaAtual.inicio_intervalo)} → ${formatarHora(jornadaAtual.fim_intervalo)}`;
-    } else if (jornadaAtual?.inicio_intervalo) {
-      resumoIntervaloEl.textContent = `${formatarHora(jornadaAtual.inicio_intervalo)} → Em andamento`;
-    } else {
-      resumoIntervaloEl.textContent = 'Não registrado';
-    }
-  }
-
-  if (resumoSaidaEl) {
-    resumoSaidaEl.textContent = jornadaAtual?.saida
-      ? formatarHora(jornadaAtual.saida)
-      : 'Não registrado';
-  }
 }
 
 function atualizarStatusVisual() {
