@@ -13,66 +13,31 @@ const mensagemLogin = document.getElementById('mensagemLogin');
 const nomeUsuario = document.getElementById('nomeUsuario');
 const btnLogout = document.getElementById('btnLogout');
 
-async function redirecionarPorPerfil(user) {
-  if (!user) {
-    mostrarLogin();
-    return;
-  }
-
-  const membro = await obterEmpresaDoUsuario(user.id);
-
-  if (!membro) {
-    if (mensagemLogin) {
-      mensagemLogin.textContent = 'Usuário sem vínculo ativo com empresa.';
-    }
-    await fazerLogout();
-    return;
-  }
-
-  const papel = (membro.papel || '').toString().trim().toLowerCase();
-
-  if (papel === 'admin') {
-    window.location.href = '../frontend-admin/index.html';
-    return;
-  }
-
-  if (nomeUsuario) {
-    nomeUsuario.textContent = user.email || 'Usuário logado';
-  }
-
-  mostrarApp();
-  await carregarEstadoAtual();
-  await renderizarHistorico();
-}
-
 const horaEntradaEl = document.getElementById('horaEntrada');
 const statusEntradaEl = document.getElementById('statusEntrada');
 const btnEntrada = document.getElementById('btnEntrada');
-
 const horaIntervaloEl = document.getElementById('horaIntervalo');
 const statusIntervaloEl = document.getElementById('statusIntervalo');
 const btnIntervalo = document.getElementById('btnIntervalo');
-
 const horaSaidaEl = document.getElementById('horaSaida');
 const statusSaidaEl = document.getElementById('statusSaida');
 const btnSaida = document.getElementById('btnSaida');
-
 const statusGeralEl = document.getElementById('statusGeral');
 const relogioTotalEl = document.getElementById('relogioTotal');
-
 const resumoEntradaEl = document.getElementById('resumoEntrada');
 const resumoIntervaloEl = document.getElementById('resumoIntervalo');
 const resumoSaidaEl = document.getElementById('resumoSaida');
+const historicoContainer = document.getElementById('historicoContainer');
 
 let jornadaAtual = null;
 let timerRelogio = null;
 let tempoAcumulado = 0;
 let inicioContagem = null;
-let inicioIntervalo = null;
-let fimIntervalo = null;
 
-function formatarHora(data) {
-  return new Date(data).toLocaleTimeString('pt-BR', {
+function formatarHora(dataIso) {
+  if (!dataIso) return 'Aguardando...';
+
+  return new Date(dataIso).toLocaleTimeString('pt-BR', {
     timeZone: 'America/Sao_Paulo',
     hour: '2-digit',
     minute: '2-digit',
@@ -84,7 +49,6 @@ function formatarDataComDiaSemana(dataIso) {
   if (!dataIso) return 'Sem data';
 
   const data = new Date(`${dataIso}T00:00:00`);
-
   const dataFormatada = data.toLocaleDateString('pt-BR', {
     timeZone: 'America/Sao_Paulo',
     weekday: 'long',
@@ -114,11 +78,28 @@ function formatarDuracaoMs(ms) {
   return `${horas}:${minutos}:${segundos}`;
 }
 
+function formatarPeriodo(inicio, fim) {
+  if (inicio === 'Não registrado' && fim === 'Não registrado') return 'Não registrado';
+  if (inicio !== 'Não registrado' && fim === 'Não registrado') return `${inicio} → Em andamento`;
+  return `${inicio} → ${fim}`;
+}
+
+function classeStatusHistorico(status) {
+  if (status === 'encerrado') return 'status-encerrado';
+  if (status === 'intervalo') return 'status-intervalo';
+  if (status === 'trabalhando') return 'status-trabalhando';
+  return 'status-inicial';
+}
+
+function aplicarClasseVazia(elemento, temValor) {
+  if (!elemento) return;
+  elemento.classList.toggle('vazio', !temValor);
+}
+
 function atualizarRelogio() {
   if (!relogioTotalEl) return;
 
   let total = tempoAcumulado;
-
   if (inicioContagem) {
     total += Date.now() - inicioContagem;
   }
@@ -139,55 +120,76 @@ function pararRelogio() {
   }
 }
 
-function aplicarClasseVazia(elemento, temValor) {
-  if (!elemento) return;
-  elemento.classList.toggle('vazio', !temValor);
+function atualizarResumo() {
+  if (resumoEntradaEl) resumoEntradaEl.textContent = jornadaAtual?.entrada ? formatarDataHoraBanco(jornadaAtual.entrada) : 'Não registrado';
+
+  if (resumoIntervaloEl) {
+    resumoIntervaloEl.textContent = jornadaAtual?.inicio_intervalo
+      ? formatarPeriodo(
+          formatarDataHoraBanco(jornadaAtual.inicio_intervalo),
+          formatarDataHoraBanco(jornadaAtual.fim_intervalo)
+        )
+      : 'Não registrado';
+  }
+
+  if (resumoSaidaEl) resumoSaidaEl.textContent = jornadaAtual?.saida ? formatarDataHoraBanco(jornadaAtual.saida) : 'Não registrado';
 }
 
+function calcularEstadoRelogio() {
+  tempoAcumulado = 0;
+  inicioContagem = null;
 
-async function inicializarSessao() {
-  const user = await obterUsuarioAtual();
+  if (!jornadaAtual?.entrada) return;
 
-  if (!user) {
-    mostrarLogin();
+  const entradaMs = new Date(jornadaAtual.entrada).getTime();
+  const agora = Date.now();
+
+  if (jornadaAtual.saida) {
+    const saidaMs = new Date(jornadaAtual.saida).getTime();
+    let pausaMs = jornadaAtual.duracao_intervalo_ms || 0;
+
+    if (jornadaAtual.inicio_intervalo && jornadaAtual.fim_intervalo) {
+      pausaMs = new Date(jornadaAtual.fim_intervalo).getTime() - new Date(jornadaAtual.inicio_intervalo).getTime();
+    }
+
+    tempoAcumulado = Math.max(0, saidaMs - entradaMs - pausaMs);
     return;
   }
 
-  await redirecionarPorPerfil(user);
-}
+  if (jornadaAtual.status === 'intervalo' && jornadaAtual.inicio_intervalo) {
+    tempoAcumulado = Math.max(0, new Date(jornadaAtual.inicio_intervalo).getTime() - entradaMs);
+    return;
+  }
 
+  if (jornadaAtual.inicio_intervalo && jornadaAtual.fim_intervalo) {
+    tempoAcumulado = Math.max(0, new Date(jornadaAtual.fim_intervalo).getTime() - entradaMs);
+    inicioContagem = jornadaAtual.status === 'trabalhando' ? agora : null;
+    return;
+  }
 
-if (formLogin) {
-  formLogin.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const email = emailLogin?.value?.trim();
-    const senha = senhaLogin?.value ?? '';
-
-    if (mensagemLogin) mensagemLogin.textContent = '';
-
-    const user = await fazerLogin(email, senha);
-
-    if (!user) {
-      if (mensagemLogin) {
-        mensagemLogin.textContent = 'Email ou senha inválidos.';
-      }
-      return;
-    }
-
-    formLogin.reset();
-    await redirecionarPorPerfil(user);
-  });
+  tempoAcumulado = 0;
+  inicioContagem = entradaMs;
 }
 
 function atualizarStatusVisual() {
   if (!jornadaAtual) {
     if (horaEntradaEl) horaEntradaEl.textContent = 'Aguardando...';
-    if (statusEntradaEl) statusEntradaEl.textContent = 'Ainda não registrada';
+    if (statusEntradaEl) {
+      statusEntradaEl.textContent = 'Ainda não registrada';
+      statusEntradaEl.className = 'status status-aguardando';
+    }
+
     if (horaIntervaloEl) horaIntervaloEl.textContent = 'Aguardando...';
-    if (statusIntervaloEl) statusIntervaloEl.textContent = 'Ainda não registrado';
+    if (statusIntervaloEl) {
+      statusIntervaloEl.textContent = 'Ainda não registrado';
+      statusIntervaloEl.className = 'status status-aguardando';
+    }
+
     if (horaSaidaEl) horaSaidaEl.textContent = 'Aguardando...';
-    if (statusSaidaEl) statusSaidaEl.textContent = 'Ainda não registrada';
+    if (statusSaidaEl) {
+      statusSaidaEl.textContent = 'Ainda não registrada';
+      statusSaidaEl.className = 'status status-aguardando';
+    }
 
     aplicarClasseVazia(horaEntradaEl, false);
     aplicarClasseVazia(horaIntervaloEl, false);
@@ -199,13 +201,14 @@ function atualizarStatusVisual() {
     }
 
     if (btnEntrada) btnEntrada.disabled = false;
-    if (btnIntervalo) btnIntervalo.disabled = true;
+    if (btnIntervalo) {
+      btnIntervalo.disabled = true;
+      btnIntervalo.textContent = 'Registrar intervalo';
+    }
     if (btnSaida) btnSaida.disabled = true;
 
     tempoAcumulado = 0;
     inicioContagem = null;
-    inicioIntervalo = null;
-    fimIntervalo = null;
     pararRelogio();
     atualizarRelogio();
     atualizarResumo();
@@ -213,60 +216,63 @@ function atualizarStatusVisual() {
   }
 
   if (horaEntradaEl) horaEntradaEl.textContent = formatarHora(jornadaAtual.entrada);
+  aplicarClasseVazia(horaEntradaEl, true);
   if (statusEntradaEl) {
     statusEntradaEl.textContent = 'Entrada registrada';
     statusEntradaEl.className = 'status status-concluido';
   }
-  aplicarClasseVazia(horaEntradaEl, true);
 
   if (jornadaAtual.inicio_intervalo) {
     if (horaIntervaloEl) horaIntervaloEl.textContent = formatarHora(jornadaAtual.inicio_intervalo);
     aplicarClasseVazia(horaIntervaloEl, true);
 
-    if (jornadaAtual.fim_intervalo) {
-      if (statusIntervaloEl) {
+    if (statusIntervaloEl) {
+      if (jornadaAtual.fim_intervalo) {
         statusIntervaloEl.textContent = 'Intervalo encerrado';
         statusIntervaloEl.className = 'status status-concluido';
-      }
-    } else {
-      if (statusIntervaloEl) {
+      } else {
         statusIntervaloEl.textContent = 'Intervalo em andamento';
         statusIntervaloEl.className = 'status status-ativo';
       }
     }
   } else {
     if (horaIntervaloEl) horaIntervaloEl.textContent = 'Aguardando...';
+    aplicarClasseVazia(horaIntervaloEl, false);
     if (statusIntervaloEl) {
       statusIntervaloEl.textContent = 'Ainda não registrado';
       statusIntervaloEl.className = 'status status-aguardando';
     }
-    aplicarClasseVazia(horaIntervaloEl, false);
   }
 
   if (jornadaAtual.saida) {
     if (horaSaidaEl) horaSaidaEl.textContent = formatarHora(jornadaAtual.saida);
+    aplicarClasseVazia(horaSaidaEl, true);
     if (statusSaidaEl) {
       statusSaidaEl.textContent = 'Saída registrada';
       statusSaidaEl.className = 'status status-concluido';
     }
-    aplicarClasseVazia(horaSaidaEl, true);
   } else {
     if (horaSaidaEl) horaSaidaEl.textContent = 'Aguardando...';
+    aplicarClasseVazia(horaSaidaEl, false);
     if (statusSaidaEl) {
       statusSaidaEl.textContent = 'Ainda não registrada';
       statusSaidaEl.className = 'status status-aguardando';
     }
-    aplicarClasseVazia(horaSaidaEl, false);
   }
+
+  calcularEstadoRelogio();
 
   if (jornadaAtual.status === 'intervalo') {
     if (statusGeralEl) {
       statusGeralEl.textContent = 'Em intervalo';
       statusGeralEl.className = 'status-geral status-intervalo';
     }
+
     if (btnEntrada) btnEntrada.disabled = true;
-    if (btnIntervalo) btnIntervalo.disabled = false;
-    if (btnIntervalo) btnIntervalo.textContent = 'Encerrar intervalo';
+    if (btnIntervalo) {
+      btnIntervalo.disabled = false;
+      btnIntervalo.textContent = 'Encerrar intervalo';
+    }
     if (btnSaida) btnSaida.disabled = true;
     pararRelogio();
   } else if (jornadaAtual.status === 'trabalhando') {
@@ -274,11 +280,14 @@ function atualizarStatusVisual() {
       statusGeralEl.textContent = 'Trabalhando';
       statusGeralEl.className = 'status-geral status-trabalhando';
     }
+
     if (btnEntrada) btnEntrada.disabled = true;
-    if (btnIntervalo) btnIntervalo.disabled = false;
-    if (btnIntervalo) btnIntervalo.textContent = jornadaAtual.inicio_intervalo && !jornadaAtual.fim_intervalo
-      ? 'Encerrar intervalo'
-      : 'Registrar intervalo';
+    if (btnIntervalo) {
+      btnIntervalo.disabled = false;
+      btnIntervalo.textContent = jornadaAtual.inicio_intervalo && !jornadaAtual.fim_intervalo
+        ? 'Encerrar intervalo'
+        : 'Registrar intervalo';
+    }
     if (btnSaida) btnSaida.disabled = false;
     iniciarRelogio();
   } else if (jornadaAtual.status === 'encerrado') {
@@ -286,9 +295,12 @@ function atualizarStatusVisual() {
       statusGeralEl.textContent = 'Expediente encerrado';
       statusGeralEl.className = 'status-geral status-encerrado';
     }
+
     if (btnEntrada) btnEntrada.disabled = false;
-    if (btnIntervalo) btnIntervalo.disabled = true;
-    if (btnIntervalo) btnIntervalo.textContent = 'Registrar intervalo';
+    if (btnIntervalo) {
+      btnIntervalo.disabled = true;
+      btnIntervalo.textContent = 'Registrar intervalo';
+    }
     if (btnSaida) btnSaida.disabled = true;
     pararRelogio();
   }
@@ -297,12 +309,22 @@ function atualizarStatusVisual() {
   atualizarRelogio();
 }
 
+function mostrarLogin() {
+  if (telaLogin) telaLogin.classList.remove('escondido');
+  if (telaApp) telaApp.classList.add('escondido');
+}
+
+function mostrarApp() {
+  if (telaLogin) telaLogin.classList.add('escondido');
+  if (telaApp) telaApp.classList.remove('escondido');
+}
+
 async function fazerLogin(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     console.error('Erro no login:', error.message);
-    alert('Login inválido: ' + error.message);
+    if (mensagemLogin) mensagemLogin.textContent = 'Email ou senha inválidos.';
     return null;
   }
 
@@ -320,16 +342,6 @@ async function obterUsuarioAtual() {
   return data.user;
 }
 
-function mostrarLogin() {
-  if (telaLogin) telaLogin.classList.remove('escondido');
-  if (telaApp) telaApp.classList.add('escondido');
-}
-
-function mostrarApp() {
-  if (telaLogin) telaLogin.classList.add('escondido');
-  if (telaApp) telaApp.classList.remove('escondido');
-}
-
 async function fazerLogout() {
   const { error } = await supabase.auth.signOut();
 
@@ -341,15 +353,14 @@ async function fazerLogout() {
   jornadaAtual = null;
   tempoAcumulado = 0;
   inicioContagem = null;
-  inicioIntervalo = null;
-  fimIntervalo = null;
-
+  pararRelogio();
   atualizarStatusVisual();
   mostrarLogin();
 
   if (mensagemLogin) mensagemLogin.textContent = '';
   if (formLogin) formLogin.reset();
   if (nomeUsuario) nomeUsuario.textContent = 'Carregando...';
+  if (historicoContainer) historicoContainer.innerHTML = '<p class="historico-vazio">Carregando histórico...</p>';
 }
 
 async function obterEmpresaDoUsuario(userId) {
@@ -368,6 +379,34 @@ async function obterEmpresaDoUsuario(userId) {
   return data;
 }
 
+async function redirecionarPorPerfil(user) {
+  if (!user) {
+    mostrarLogin();
+    return;
+  }
+
+  const membro = await obterEmpresaDoUsuario(user.id);
+
+  if (!membro) {
+    if (mensagemLogin) mensagemLogin.textContent = 'Usuário sem vínculo ativo com empresa.';
+    await fazerLogout();
+    return;
+  }
+
+  const papel = (membro.papel || '').toString().trim().toLowerCase();
+
+  if (papel === 'admin') {
+    window.location.href = '../frontend-admin/index.html';
+    return;
+  }
+
+  if (nomeUsuario) nomeUsuario.textContent = user.email || 'Usuário logado';
+
+  mostrarApp();
+  await carregarEstadoAtual();
+  await renderizarHistorico();
+}
+
 async function salvarEntradaNoSupabase() {
   const user = await obterUsuarioAtual();
   if (!user) {
@@ -382,7 +421,6 @@ async function salvarEntradaNoSupabase() {
   }
 
   const agora = new Date();
-
   const { data, error } = await supabase
     .from('jornadas')
     .insert({
@@ -411,10 +449,7 @@ async function salvarEntradaNoSupabase() {
 
 async function buscarJornadaAbertaDoUsuario() {
   const user = await obterUsuarioAtual();
-  if (!user) {
-    console.error('Nenhum usuário logado.');
-    return null;
-  }
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('jornadas')
@@ -429,7 +464,7 @@ async function buscarJornadaAbertaDoUsuario() {
     return null;
   }
 
-  return data[0] || null;
+  return data?.[0] || null;
 }
 
 async function registrarIntervaloNoSupabase() {
@@ -440,13 +475,9 @@ async function registrarIntervaloNoSupabase() {
   }
 
   const agora = new Date().toISOString();
-
   const { data, error } = await supabase
     .from('jornadas')
-    .update({
-      inicio_intervalo: agora,
-      status: 'intervalo'
-    })
+    .update({ inicio_intervalo: agora, status: 'intervalo' })
     .eq('id', jornada.id)
     .select()
     .single();
@@ -468,12 +499,16 @@ async function encerrarIntervaloNoSupabase() {
   }
 
   const agora = new Date().toISOString();
+  const pausaMs = jornada.inicio_intervalo
+    ? Math.max(0, new Date(agora).getTime() - new Date(jornada.inicio_intervalo).getTime())
+    : jornada.duracao_intervalo_ms || 0;
 
   const { data, error } = await supabase
     .from('jornadas')
     .update({
       fim_intervalo: agora,
-      status: 'trabalhando'
+      status: 'trabalhando',
+      duracao_intervalo_ms: pausaMs
     })
     .eq('id', jornada.id)
     .select()
@@ -499,9 +534,8 @@ async function registrarSaidaNoSupabase() {
   const entradaMs = new Date(jornada.entrada).getTime();
 
   let pausaMs = jornada.duracao_intervalo_ms || 0;
-
   if (jornada.inicio_intervalo && jornada.fim_intervalo) {
-    pausaMs = new Date(jornada.fim_intervalo).getTime() - new Date(jornada.inicio_intervalo).getTime();
+    pausaMs = Math.max(0, new Date(jornada.fim_intervalo).getTime() - new Date(jornada.inicio_intervalo).getTime());
   }
 
   const tempoTrabalhadoMs = Math.max(0, agora.getTime() - entradaMs - pausaMs);
@@ -529,25 +563,11 @@ async function registrarSaidaNoSupabase() {
 
 async function listarJornadasDoUsuario() {
   const user = await obterUsuarioAtual();
-  if (!user) {
-    console.error('Nenhum usuário logado.');
-    return [];
-  }
+  if (!user) return [];
 
   const { data, error } = await supabase
     .from('jornadas')
-    .select(`
-      id,
-      data,
-      entrada,
-      inicio_intervalo,
-      fim_intervalo,
-      saida,
-      status,
-      tempo_trabalhado_ms,
-      duracao_intervalo_ms,
-      created_at
-    `)
+    .select('id, data, entrada, inicio_intervalo, fim_intervalo, saida, status, tempo_trabalhado_ms, duracao_intervalo_ms, created_at')
     .eq('user_id', user.id)
     .order('entrada', { ascending: false });
 
@@ -564,7 +584,6 @@ async function obterHistoricoFormatado() {
 
   return jornadas.map((jornada) => ({
     id: jornada.id,
-    data: jornada.data || 'Sem data',
     dataCompleta: formatarDataComDiaSemana(jornada.data),
     entrada: formatarDataHoraBanco(jornada.entrada),
     inicioIntervalo: formatarDataHoraBanco(jornada.inicio_intervalo),
@@ -572,80 +591,44 @@ async function obterHistoricoFormatado() {
     saida: formatarDataHoraBanco(jornada.saida),
     status: jornada.status || 'Sem status',
     tempoTrabalhado: formatarDuracaoMs(jornada.tempo_trabalhado_ms),
-    duracaoIntervalo: formatarDuracaoMs(jornada.duracao_intervalo_ms),
-    criadoEm: formatarDataHoraBanco(jornada.created_at)
+    duracaoIntervalo: formatarDuracaoMs(jornada.duracao_intervalo_ms)
   }));
 }
 
-function formatarPeriodo(inicio, fim) {
-  if (inicio === 'Não registrado' && fim === 'Não registrado') {
-    return 'Não registrado';
-  }
-
-  if (inicio !== 'Não registrado' && fim === 'Não registrado') {
-    return `${inicio} → Em andamento`;
-  }
-
-  return `${inicio} → ${fim}`;
-}
-
-function classeStatusHistorico(status) {
-  if (status === 'encerrado') return 'status-encerrado';
-  if (status === 'intervalo') return 'status-intervalo';
-  if (status === 'trabalhando') return 'status-trabalhando';
-  return 'status-inicial';
-}
-
 async function renderizarHistorico() {
-  const container = document.getElementById('historicoContainer');
-  if (!container) return;
+  if (!historicoContainer) return;
 
   const historico = (await obterHistoricoFormatado()).slice(0, 3);
 
   if (!historico.length) {
-    container.innerHTML = `
-      <div class="historico-vazio">
-        <p>Nenhuma jornada encontrada.</p>
-      </div>
-    `;
+    historicoContainer.innerHTML = '<p class="historico-vazio">Nenhuma jornada encontrada.</p>';
     return;
   }
 
-  container.innerHTML = historico.map((item) => `
+  historicoContainer.innerHTML = historico.map((item) => `
     <article class="historico-item">
       <div class="historico-topo">
         <div>
           <p class="historico-data">${item.dataCompleta}</p>
-          <span class="historico-status ${classeStatusHistorico(item.status)}">
-            ${item.status}
-          </span>
+          <span class="historico-status ${classeStatusHistorico(item.status)}">${item.status}</span>
         </div>
       </div>
-
       <div class="historico-grid">
         <div class="historico-campo">
           <span class="historico-label">Entrada</span>
           <strong>${item.entrada}</strong>
         </div>
-
         <div class="historico-campo">
           <span class="historico-label">Intervalo</span>
           <strong>${formatarPeriodo(item.inicioIntervalo, item.fimIntervalo)}</strong>
         </div>
-
         <div class="historico-campo">
           <span class="historico-label">Saída</span>
           <strong>${item.saida}</strong>
         </div>
-
         <div class="historico-campo">
-          <span class="historico-label">Tempo trabalhado</span>
+          <span class="historico-label">Total</span>
           <strong>${item.tempoTrabalhado}</strong>
-
-        <div class="historico-campo">
-          <span class="historico-label">Tempo de intervalo</span>
-          <strong>${item.duracaoIntervalo}</strong>
-        </div>
         </div>
       </div>
     </article>
@@ -654,138 +637,84 @@ async function renderizarHistorico() {
 
 async function carregarEstadoAtual() {
   jornadaAtual = await buscarJornadaAbertaDoUsuario();
-
-  if (!jornadaAtual) {
-    atualizarStatusVisual();
-    await renderizarHistorico();
-    return;
-  }
-
-  tempoAcumulado = jornadaAtual.tempo_trabalhado_ms || 0;
-
-  if (jornadaAtual.status === 'trabalhando') {
-    const referenciaInicio = jornadaAtual.fim_intervalo || jornadaAtual.entrada;
-    inicioContagem = new Date(referenciaInicio).getTime();
-  } else {
-    inicioContagem = null;
-  }
-
-  if (jornadaAtual.inicio_intervalo) {
-    inicioIntervalo = new Date(jornadaAtual.inicio_intervalo).getTime();
-  }
-
-  if (jornadaAtual.fim_intervalo) {
-    fimIntervalo = new Date(jornadaAtual.fim_intervalo).getTime();
-  }
-
   atualizarStatusVisual();
-  await renderizarHistorico();
 }
 
-function definirBotaoCarregando(botao, carregando, textoCarregando, textoOriginal) {
-  if (!botao) return;
+async function inicializarSessao() {
+  const user = await obterUsuarioAtual();
 
-  if (carregando) {
-    botao.dataset.textoOriginal = textoOriginal || botao.textContent;
-    botao.textContent = textoCarregando;
-    botao.disabled = true;
+  if (!user) {
+    mostrarLogin();
+    atualizarStatusVisual();
     return;
   }
 
-  botao.textContent = botao.dataset.textoOriginal || textoOriginal || botao.textContent;
+  await redirecionarPorPerfil(user);
 }
 
-btnEntrada?.addEventListener('click', async () => {
-  definirBotaoCarregando(btnEntrada, true, 'Registrando...');
+function configurarEventos() {
+  if (formLogin) {
+    formLogin.addEventListener('submit', async (event) => {
+      event.preventDefault();
 
-  try {
-    const data = await salvarEntradaNoSupabase();
-    if (!data) return;
+      const email = emailLogin?.value?.trim();
+      const senha = senhaLogin?.value ?? '';
+      if (mensagemLogin) mensagemLogin.textContent = '';
 
-    jornadaAtual = data;
-    tempoAcumulado = 0;
-    inicioContagem = new Date(data.entrada).getTime();
-    inicioIntervalo = null;
-    fimIntervalo = null;
+      const user = await fazerLogin(email, senha);
+      if (!user) return;
 
-    atualizarStatusVisual();
-    renderizarHistorico();
-  } finally {
-    definirBotaoCarregando(btnEntrada, false);
-    atualizarStatusVisual();
+      formLogin.reset();
+      await redirecionarPorPerfil(user);
+    });
   }
-});
 
-btnIntervalo?.addEventListener('click', async () => {
-  if (!jornadaAtual) return;
+  if (btnLogout) {
+    btnLogout.addEventListener('click', fazerLogout);
+  }
 
-  const texto = jornadaAtual.status === 'intervalo'
-    ? 'Encerrando...'
-    : 'Registrando...';
+  if (btnEntrada) {
+    btnEntrada.addEventListener('click', async () => {
+      const novaJornada = await salvarEntradaNoSupabase();
+      if (!novaJornada) return;
 
-  definirBotaoCarregando(btnIntervalo, true, texto);
+      jornadaAtual = novaJornada;
+      atualizarStatusVisual();
+      await renderizarHistorico();
+    });
+  }
 
-  try {
-    if (jornadaAtual.status === 'intervalo') {
-      const data = await encerrarIntervaloNoSupabase();
-      if (!data) return;
+  if (btnIntervalo) {
+    btnIntervalo.addEventListener('click', async () => {
+      let jornadaAtualizada = null;
 
-      jornadaAtual = data;
-      fimIntervalo = new Date(data.fim_intervalo).getTime();
-      inicioContagem = Date.now();
-    } else {
-      if (inicioContagem) {
-        tempoAcumulado += Date.now() - inicioContagem;
-        inicioContagem = null;
+      if (jornadaAtual?.status === 'intervalo') {
+        jornadaAtualizada = await encerrarIntervaloNoSupabase();
+      } else {
+        jornadaAtualizada = await registrarIntervaloNoSupabase();
       }
 
-      const data = await registrarIntervaloNoSupabase();
-      if (!data) return;
+      if (!jornadaAtualizada) return;
 
-      jornadaAtual = data;
-      inicioIntervalo = new Date(data.inicio_intervalo).getTime();
-      fimIntervalo = null;
-    }
-
-    atualizarStatusVisual();
-    renderizarHistorico();
-  } finally {
-    definirBotaoCarregando(btnIntervalo, false);
-    atualizarStatusVisual();
+      jornadaAtual = jornadaAtualizada;
+      atualizarStatusVisual();
+      await renderizarHistorico();
+    });
   }
-});
 
-btnSaida?.addEventListener('click', async () => {
-  if (!jornadaAtual) return;
+  if (btnSaida) {
+    btnSaida.addEventListener('click', async () => {
+      const jornadaAtualizada = await registrarSaidaNoSupabase();
+      if (!jornadaAtualizada) return;
 
-  definirBotaoCarregando(btnSaida, true, 'Registrando...');
-
-  try {
-    if (inicioContagem) {
-      tempoAcumulado += Date.now() - inicioContagem;
-      inicioContagem = null;
-    }
-
-    const data = await registrarSaidaNoSupabase();
-    if (!data) return;
-
-    jornadaAtual = data;
-    tempoAcumulado = data.tempo_trabalhado_ms || tempoAcumulado;
-
-    atualizarStatusVisual();
-    renderizarHistorico();
-  } finally {
-    definirBotaoCarregando(btnSaida, false);
-    atualizarStatusVisual();
+      jornadaAtual = jornadaAtualizada;
+      atualizarStatusVisual();
+      await renderizarHistorico();
+    });
   }
-});
-
-if (btnLogout) {
-  btnLogout.addEventListener('click', async () => {
-    await fazerLogout();
-  });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  configurarEventos();
   await inicializarSessao();
 });
