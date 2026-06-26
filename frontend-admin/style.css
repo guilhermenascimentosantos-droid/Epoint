@@ -426,8 +426,8 @@ select {
 
 .filtros-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 1fr) minmax(160px, 0.9fr) auto;
-  gap: 16px;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 20px;
   align-items: end;
 }
 
@@ -478,8 +478,9 @@ select {
 }
 
 .filtros-botoes {
+  grid-column: 1 / -1;
   display: flex;
-  gap: 10px;
+  gap: 15px;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
@@ -487,7 +488,7 @@ select {
 
 .botao-principal,
 .botao-secundario {
-  min-height: 50px;
+  min-width: 140px;
   padding: 0 18px;
   border-radius: 16px;
   font-size: 15px;
@@ -644,6 +645,38 @@ select {
 .status-admin.vazio {
   background: var(--neutral-bg);
   color: var(--neutral-text);
+}
+
+.tabela-paginacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-top: 18px;
+  flex-wrap: wrap;
+}
+
+.paginacao-info {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.paginacao-acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paginacao-pagina {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.paginacao-acoes button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {

@@ -1,66 +1,72 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-const supabaseUrl = 'https://kyrsdgeuefwmzhmqjmhb.supabase.co';
-const supabaseKey = 'sb_publishable_XSfOnwIO8Aj0YAf2q92yEQ_KWkTKRW5';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from '../shared/supabase.js';
+import {
+  obterUsuarioAtual,
+  obterEmpresaDoUsuario,
+  fazerLogout
+} from '../shared/auth.js';
+import {
+  formatarHora,
+  formatarDuracaoMs
+} from '../shared/utils.js';
 
 let usuarioAtual = null;
 let membroAtual = null;
 let intervaloAtualizacao = null;
+let registrosCache = [];
+let paginaAtual = 1;
 
-async function obterUsuarioAtual() {
-  const { data, error } = await supabase.auth.getUser();
+const REGISTROS_POR_PAGINA = 10;
 
-  if (error) {
-    console.error('Erro ao obter usuário:', error.message);
-    return null;
-  }
+const totalRegistrosEl = document.getElementById('totalRegistros');
+const registrosCompletosEl = document.getElementById('registrosCompletos');
+const ultimaJornadaEl = document.getElementById('ultimaJornada');
+const tabelaHistoricoEl = document.getElementById('tabelaHistorico');
+const tabelaPaginacaoEl = document.getElementById('tabelaPaginacao');
+const btnLogout = document.getElementById('btnLogout');
 
-  return data.user;
+const campoBusca =
+  document.getElementById('buscaFuncionario') ||
+  document.getElementById('filtroBusca') ||
+  document.getElementById('buscarFuncionario') ||
+  document.getElementById('searchInput');
+
+const filtroStatus =
+  document.getElementById('filtroStatus') ||
+  document.getElementById('statusFiltro') ||
+  document.getElementById('selectStatus');
+
+const filtroData =
+  document.getElementById('filtroData') ||
+  document.getElementById('dataFiltro') ||
+  document.getElementById('selectData');
+
+function obterDataHojeBrasil() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo'
+  }).format(new Date());
 }
 
-async function obterEmpresaDoUsuario(userId) {
-  const { data, error } = await supabase
-    .from('membros_empresa')
-    .select('empresa_id, papel, ativo')
-    .eq('user_id', userId)
-    .eq('ativo', true)
-    .single();
+function obterDataISOBr(dataIso) {
+  if (!dataIso) return '';
 
-  if (error) {
-    console.error('Erro ao buscar empresa do usuário:', error.message);
-    return null;
-  }
-
-  return data;
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo'
+  }).format(new Date(dataIso));
 }
 
-function formatarTempo(ms) {
-  const totalSegundos = Math.floor((ms || 0) / 1000);
-  const horas = String(Math.floor(totalSegundos / 3600)).padStart(2, '0');
-  const minutos = String(Math.floor((totalSegundos % 3600) / 60)).padStart(2, '0');
-  const segundos = String(totalSegundos % 60).padStart(2, '0');
-  return `${horas}:${minutos}:${segundos}`;
-}
+function formatarDataLocal(dataIso, fallback = '—') {
+  if (!dataIso) return fallback;
 
-function formatarHoraLocal(dataIso) {
-  if (!dataIso) return '—';
-
-  return new Date(dataIso).toLocaleTimeString('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    hour: '2-digit',
-    minute: '2-digit'
+  return new Date(dataIso).toLocaleDateString('pt-BR', {
+    timeZone: 'America/Sao_Paulo'
   });
 }
 
-function formatarDataLocal(dataIso, dataFallback) {
-  if (dataIso) {
-    return new Date(dataIso).toLocaleDateString('pt-BR', {
-      timeZone: 'America/Sao_Paulo'
-    });
-  }
+function formatarHoraCurta(dataIso) {
+  if (!dataIso) return '—';
 
-  return dataFallback || '—';
+  const horaCompleta = formatarHora(dataIso);
+  return horaCompleta === 'Aguardando...' ? '—' : horaCompleta.slice(0, 5);
 }
 
 function normalizarStatus(status) {
@@ -68,7 +74,6 @@ function normalizarStatus(status) {
   if (status === 'encerrado') return 'encerrado';
   if (status === 'intervalo') return 'intervalo';
   if (status === 'trabalhando') return 'trabalhando';
-  if (status === 'inicial') return 'vazio';
   return 'vazio';
 }
 
@@ -79,35 +84,75 @@ function textoStatus(status) {
   return 'Sem status';
 }
 
+function obterClasseStatus(status) {
+  if (status === 'encerrado') return 'encerrado';
+  if (status === 'intervalo') return 'intervalo';
+  if (status === 'trabalhando') return 'trabalhando';
+  return 'vazio';
+}
+
 async function listarHistoricoAdmin() {
-  if (!usuarioAtual || !membroAtual?.empresa_id) {
+  if (!usuarioAtual || !membroAtual?.empresa_id) return [];
+
+  const [
+    { data: jornadas, error: errorJornadas },
+    { data: perfis, error: erroPerfis }
+  ] = await Promise.all([
+    supabase
+      .from('jornadas')
+      .select('*')
+      .eq('empresa_id', membroAtual.empresa_id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('perfis')
+      .select('user_id, nome, email')
+  ]);
+
+  if (errorJornadas) {
+    console.error('Erro ao buscar jornadas da empresa:', errorJornadas.message || errorJornadas);
     return [];
   }
 
-  const { data, error } = await supabase
-    .from('jornadas')
-    .select('*')
-    .eq('empresa_id', membroAtual.empresa_id)
-    .order('entrada', { ascending: false });
-
-  if (error) {
-    console.error('Erro ao buscar jornadas da empresa:', error.message || error);
-    return [];
+  if (erroPerfis) {
+    console.error('Erro ao buscar perfis:', erroPerfis.message || erroPerfis);
   }
 
-  return (data || []).map((registro) => {
+  const mapaPerfis = new Map(
+    (perfis || []).map((perfil) => [
+      String(perfil.user_id || '').trim(),
+      {
+        nome: perfil.nome || null,
+        email: perfil.email || null
+      }
+    ])
+  );
+
+  return (jornadas || []).map((registro) => {
     const statusNormalizado = normalizarStatus(registro.status);
+    const dataISO = registro.data || obterDataISOBr(registro.entrada || registro.created_at);
+    const chaveUserId = String(registro.user_id || '').trim();
+    const perfil = mapaPerfis.get(chaveUserId);
 
     return {
       ...registro,
-      funcionario: registro.user_id || 'Não informado',
-      dataISO: registro.data || (registro.entrada ? new Date(registro.entrada).toISOString().split('T')[0] : ''),
-      dataExibicao: formatarDataLocal(registro.entrada, registro.data),
-      entradaFormatada: formatarHoraLocal(registro.entrada),
-      intervaloFormatado: formatarHoraLocal(registro.inicio_intervalo),
-      retornoFormatado: formatarHoraLocal(registro.fim_intervalo),
-      saidaFormatada: formatarHoraLocal(registro.saida),
-      totalFormatado: formatarTempo(registro.tempo_trabalhado_ms || 0),
+      funcionario:
+        registro.funcionario_nome ||
+        registro.nome_funcionario ||
+        perfil?.nome ||
+        perfil?.email ||
+        registro.user_email ||
+        registro.email ||
+        'Não informado',
+      dataISO,
+      dataExibicao: formatarDataLocal(
+        registro.entrada || registro.created_at || `${dataISO}T00:00:00`,
+        registro.data || '—'
+      ),
+      entradaFormatada: formatarHoraCurta(registro.entrada),
+      intervaloFormatado: formatarHoraCurta(registro.inicio_intervalo),
+      retornoFormatado: formatarHoraCurta(registro.fim_intervalo),
+      saidaFormatada: formatarHoraCurta(registro.saida),
+      totalFormatado: formatarDuracaoMs(registro.tempo_trabalhado_ms || 0),
       statusNormalizado,
       statusTexto: textoStatus(statusNormalizado)
     };
@@ -115,22 +160,9 @@ async function listarHistoricoAdmin() {
 }
 
 function atualizarKPIs(registros) {
-  const totalRegistrosEl = document.getElementById('totalRegistros');
-  const registrosCompletosEl = document.getElementById('registrosCompletos');
-  const ultimaJornadaEl = document.getElementById('ultimaJornada');
-
   if (!totalRegistrosEl || !registrosCompletosEl || !ultimaJornadaEl) return;
 
-  const agoraBrasil = new Date(
-    new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
-  );
-
-  const hoje = [
-    agoraBrasil.getFullYear(),
-    String(agoraBrasil.getMonth() + 1).padStart(2, '0'),
-    String(agoraBrasil.getDate()).padStart(2, '0')
-  ].join('-');
-
+  const hoje = obterDataHojeBrasil();
   const registrosEncerrados = registros.filter(
     (registro) => registro.statusNormalizado === 'encerrado'
   );
@@ -148,8 +180,8 @@ function atualizarKPIs(registros) {
     }
   });
 
-  totalRegistrosEl.textContent = registrosDeHoje;
-  registrosCompletosEl.textContent = funcionariosAtivos.size;
+  totalRegistrosEl.textContent = String(registrosDeHoje);
+  registrosCompletosEl.textContent = String(funcionariosAtivos.size);
 
   const ultimoRegistroEncerrado = registrosEncerrados[0];
   ultimaJornadaEl.textContent = ultimoRegistroEncerrado
@@ -157,16 +189,11 @@ function atualizarKPIs(registros) {
     : 'Não registrada';
 }
 
-function criarTagStatus(statusNormalizado, statusTexto) {
-  return `<span class="status-admin ${statusNormalizado}">${statusTexto}</span>`;
-}
-
 function renderizarTabela(registros) {
-  const tbody = document.getElementById('tabelaHistorico');
-  if (!tbody) return;
+  if (!tabelaHistoricoEl) return;
 
   if (!registros.length) {
-    tbody.innerHTML = `
+    tabelaHistoricoEl.innerHTML = `
       <tr>
         <td colspan="8" class="tabela-vazia">Nenhum registro encontrado.</td>
       </tr>
@@ -174,122 +201,226 @@ function renderizarTabela(registros) {
     return;
   }
 
-  tbody.innerHTML = registros
-    .map((registro) => `
-      <tr>
-        <td>${registro.funcionario}</td>
-        <td>${registro.dataExibicao}</td>
-        <td>${registro.entradaFormatada}</td>
-        <td>${registro.intervaloFormatado}</td>
-        <td>${registro.retornoFormatado}</td>
-        <td>${registro.saidaFormatada}</td>
-        <td>${registro.totalFormatado}</td>
-        <td>${criarTagStatus(registro.statusNormalizado, registro.statusTexto)}</td>
-      </tr>
-    `)
+  tabelaHistoricoEl.innerHTML = registros
+    .map(
+      (registro) => `
+        <tr>
+          <td>${registro.funcionario}</td>
+          <td>${registro.dataExibicao}</td>
+          <td>${registro.entradaFormatada}</td>
+          <td>${registro.intervaloFormatado}</td>
+          <td>${registro.retornoFormatado}</td>
+          <td>${registro.saidaFormatada}</td>
+          <td>${registro.totalFormatado}</td>
+          <td>
+            <span class="status-admin ${obterClasseStatus(registro.statusNormalizado)}">
+              ${registro.statusTexto}
+            </span>
+          </td>
+        </tr>
+      `
+    )
     .join('');
 }
 
 function aplicarFiltros(registros) {
-  const filtroBusca = document.getElementById('filtroBusca');
-  const filtroData = document.getElementById('filtroData');
-  const filtroStatus = document.getElementById('filtroStatus');
+  let filtrados = [...registros];
 
-  const busca = filtroBusca ? filtroBusca.value.trim().toLowerCase() : '';
-  const data = filtroData ? filtroData.value : '';
-  const status = filtroStatus ? filtroStatus.value : '';
+  const termo = campoBusca?.value?.trim().toLowerCase() || '';
+  const statusSelecionado = filtroStatus?.value?.trim().toLowerCase() || '';
+  const dataSelecionada = filtroData?.value?.trim() || '';
 
-  return registros.filter((registro) => {
-    const bateBusca = !busca || registro.funcionario.toLowerCase().includes(busca);
-    const bateData = !data || registro.dataISO === data;
-    const bateStatus = !status || registro.statusNormalizado === status;
-    return bateBusca && bateData && bateStatus;
-  });
+  if (termo) {
+    filtrados = filtrados.filter((registro) =>
+      [
+        registro.funcionario,
+        registro.statusTexto,
+        registro.dataExibicao,
+        registro.user_id
+      ]
+        .filter(Boolean)
+        .some((valor) => String(valor).toLowerCase().includes(termo))
+    );
+  }
+
+  if (statusSelecionado && statusSelecionado !== 'todos') {
+    filtrados = filtrados.filter(
+      (registro) => registro.statusNormalizado === statusSelecionado
+    );
+  }
+
+  if (dataSelecionada) {
+    filtrados = filtrados.filter((registro) => registro.dataISO === dataSelecionada);
+  }
+
+  return filtrados;
 }
 
-function atualizarStatusAtual() {
-  const statusAtualEl = document.getElementById('statusAtualFuncionario');
-  if (!statusAtualEl) return;
-  statusAtualEl.textContent = 'Painel administrativo ativo';
+function paginarRegistros(registros) {
+  const totalPaginas = Math.max(1, Math.ceil(registros.length / REGISTROS_POR_PAGINA));
+
+  if (paginaAtual > totalPaginas) {
+    paginaAtual = totalPaginas;
+  }
+
+  if (paginaAtual < 1) {
+    paginaAtual = 1;
+  }
+
+  const inicio = (paginaAtual - 1) * REGISTROS_POR_PAGINA;
+  const fim = inicio + REGISTROS_POR_PAGINA;
+
+  return {
+    registrosPagina: registros.slice(inicio, fim),
+    totalPaginas,
+    totalRegistros: registros.length,
+    inicio,
+    fim
+  };
 }
 
-async function atualizarPainelAdmin() {
-  const registros = await listarHistoricoAdmin();
-  const registrosFiltrados = aplicarFiltros(registros);
+function renderizarPaginacao(totalPaginas, totalRegistros, inicio, fim) {
+  if (!tabelaPaginacaoEl) return;
 
-  atualizarKPIs(registros);
-  atualizarStatusAtual();
-  renderizarTabela(registrosFiltrados);
-}
-
-function limparFiltros() {
-  const filtroBusca = document.getElementById('filtroBusca');
-  const filtroData = document.getElementById('filtroData');
-  const filtroStatus = document.getElementById('filtroStatus');
-
-  if (filtroBusca) filtroBusca.value = '';
-  if (filtroData) filtroData.value = '';
-  if (filtroStatus) filtroStatus.value = '';
-
-  atualizarPainelAdmin();
-}
-
-function configurarEventos() {
-  const botaoFiltrar = document.getElementById('botaoFiltrar');
-  const botaoLimpar = document.getElementById('botaoLimpar');
-  const filtroBusca = document.getElementById('filtroBusca');
-  const filtroData = document.getElementById('filtroData');
-  const filtroStatus = document.getElementById('filtroStatus');
-  const btnLogout = document.getElementById('btnLogout');
-
-  if (botaoFiltrar) botaoFiltrar.addEventListener('click', atualizarPainelAdmin);
-  if (botaoLimpar) botaoLimpar.addEventListener('click', limparFiltros);
-  if (filtroBusca) filtroBusca.addEventListener('input', atualizarPainelAdmin);
-  if (filtroData) filtroData.addEventListener('change', atualizarPainelAdmin);
-  if (filtroStatus) filtroStatus.addEventListener('change', atualizarPainelAdmin);
-  if (btnLogout) btnLogout.addEventListener('click', fazerLogoutAdmin);
-}
-
-async function fazerLogoutAdmin() {
-  const { error } = await supabase.auth.signOut();
-
-  if (error) {
-    alert('Erro ao sair: ' + error.message);
+  if (totalRegistros <= REGISTROS_POR_PAGINA) {
+    tabelaPaginacaoEl.innerHTML = '';
     return;
   }
 
+  tabelaPaginacaoEl.innerHTML = `
+    <div class="paginacao-info">
+      Mostrando ${inicio + 1} a ${Math.min(fim, totalRegistros)} de ${totalRegistros} registros
+    </div>
+    <div class="paginacao-acoes">
+      <button
+        type="button"
+        class="botao-secundario"
+        data-pagina="anterior"
+        ${paginaAtual === 1 ? 'disabled' : ''}
+      >
+        Anterior
+      </button>
+      <span class="paginacao-pagina">Página ${paginaAtual} de ${totalPaginas}</span>
+      <button
+        type="button"
+        class="botao-secundario"
+        data-pagina="proxima"
+        ${paginaAtual === totalPaginas ? 'disabled' : ''}
+      >
+        Próxima
+      </button>
+    </div>
+  `;
+
+  const btnAnterior = tabelaPaginacaoEl.querySelector('[data-pagina="anterior"]');
+  const btnProxima = tabelaPaginacaoEl.querySelector('[data-pagina="proxima"]');
+
+  btnAnterior?.addEventListener('click', () => {
+    paginaAtual -= 1;
+    atualizarTabelaFiltrada();
+  });
+
+  btnProxima?.addEventListener('click', () => {
+    paginaAtual += 1;
+    atualizarTabelaFiltrada();
+  });
+}
+
+function atualizarTabelaFiltrada() {
+  const filtrados = aplicarFiltros(registrosCache);
+  const { registrosPagina, totalPaginas, totalRegistros, inicio, fim } =
+    paginarRegistros(filtrados);
+
+  renderizarTabela(registrosPagina);
+  renderizarPaginacao(totalPaginas, totalRegistros, inicio, fim);
+}
+
+async function carregarPainel() {
+  registrosCache = await listarHistoricoAdmin();
+  atualizarKPIs(registrosCache);
+  atualizarTabelaFiltrada();
+}
+
+function pararAtualizacaoAutomatica() {
   if (intervaloAtualizacao) {
     clearInterval(intervaloAtualizacao);
     intervaloAtualizacao = null;
+  }
+}
+
+function iniciarAtualizacaoAutomatica() {
+  pararAtualizacaoAutomatica();
+
+  intervaloAtualizacao = setInterval(() => {
+    carregarPainel();
+  }, 30000);
+}
+
+async function sairDoAdmin() {
+  pararAtualizacaoAutomatica();
+
+  const saiu = await fazerLogout();
+
+  if (!saiu) {
+    alert('Erro ao sair.');
+    return;
   }
 
   window.location.href = '../frontend-funcionario/index.html';
 }
 
-async function inicializarAdmin() {
+async function validarSessaoAdmin() {
   usuarioAtual = await obterUsuarioAtual();
 
   if (!usuarioAtual) {
-    alert('Nenhum usuário logado no admin.');
+    window.location.href = '../frontend-funcionario/index.html';
     return false;
   }
 
   membroAtual = await obterEmpresaDoUsuario(usuarioAtual.id);
 
   if (!membroAtual) {
-    alert('Usuário não está vinculado a uma empresa ativa.');
+    alert('Usuário não está vinculado a nenhuma empresa.');
+    await sairDoAdmin();
     return false;
   }
 
-  await atualizarPainelAdmin();
+  const papel = String(membroAtual.papel || '').trim().toLowerCase();
+
+  if (papel !== 'admin') {
+    window.location.href = '../frontend-funcionario/index.html';
+    return false;
+  }
+
   return true;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+function configurarEventos() {
+  btnLogout?.addEventListener('click', sairDoAdmin);
+
+  campoBusca?.addEventListener('input', () => {
+    paginaAtual = 1;
+    atualizarTabelaFiltrada();
+  });
+
+  filtroStatus?.addEventListener('change', () => {
+    paginaAtual = 1;
+    atualizarTabelaFiltrada();
+  });
+
+  filtroData?.addEventListener('change', () => {
+    paginaAtual = 1;
+    atualizarTabelaFiltrada();
+  });
+}
+
+async function inicializarAdmin() {
+  const acessoOk = await validarSessaoAdmin();
+  if (!acessoOk) return;
+
   configurarEventos();
+  await carregarPainel();
+  iniciarAtualizacaoAutomatica();
+}
 
-  const iniciou = await inicializarAdmin();
-  if (!iniciou) return;
-
-  intervaloAtualizacao = setInterval(atualizarPainelAdmin, 1000);
-});
+document.addEventListener('DOMContentLoaded', inicializarAdmin);
