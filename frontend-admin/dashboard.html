@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | Epoint</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+   <main class="admin-layout">
+
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">E</div>
+        <div class="brand-texto">
+          <strong>Epoint</strong>
+          <span>Painel administrativo</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 13h7V4H4v9Zm0 7h7v-5H4v5Zm9 0h7v-9h-7v9Zm0-16v5h7V4h-7Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="#" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9.5" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M20 8v6M23 11h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Funcionários</span>
+        </a>
+
+        <a href="registros.html" class="nav-item ativo">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 9v4l2.5 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 3v2M5.64 5.64l1.41 1.41M3 12h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Registros</span>
+        </a>
+
+        <a href="relatorios.html" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M14 2v6h6M8 13h8M8 17h5M8 9h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Relatórios</span>
+        </a>
+
+        <a href="configuracoes.html" class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82L4.21 7.2a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01A1.65 1.65 0 0 0 10 3.25V3a2 2 0 1 1 4 0v.09c0 .69.4 1.31 1.03 1.59h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.48.48-.62 1.2-.33 1.82v.01c.27.63.89 1.03 1.58 1.03H21a2 2 0 1 1 0 4h-.25c-.69 0-1.31.4-1.59 1.03V15Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Configurações</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="botao-sidebar" id="btnLogout">Sair</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-texto">
+          <span class="header-label">Empresa</span>
+          <h1>Dashboard</h1>
+          <p>Visualize rapidamente os indicadores principais do ponto eletrônico.</p>
+        </div>
+
+        <div class="header-acoes">
+          <div class="header-busca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M20 20L17 17"></path>
+            </svg>
+            <input type="text" placeholder="Pesquisar funcionário ou registro" />
+          </div>
+
+          <div class="perfil-admin">
+            <div class="perfil-avatar">A</div>
+            <div class="perfil-info">
+              <strong>Admin</strong>
+              <span>Administrador</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="admin-kpis">
+        <article class="kpi-card">
+          <span class="kpi-label">Funcionários</span>
+          <strong class="kpi-valor" id="kpiFuncionarios">0</strong>
+          <span class="kpi-ajuda">Total cadastrado</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-label">Presentes</span>
+          <strong class="kpi-valor" id="kpiPresentes">0</strong>
+          <span class="kpi-ajuda">Em jornada ativa agora</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-label">Registros do dia</span>
+          <strong class="kpi-valor" id="kpiRegistrosDia">0</strong>
+          <span class="kpi-ajuda">Batidas registradas hoje</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-label">Pendências</span>
+          <strong class="kpi-valor" id="kpiPendencias">0</strong>
+          <span class="kpi-ajuda">Precisam de revisão</span>
+        </article>
+      </section>
+
+      <section class="admin-bloco">
+        <div class="bloco-topo">
+          <div class="atalhos-grid">
+  <a href="./funcionarios.html" class="atalho-card atalho-destaque">
+    <span class="atalho-icone">
+        <svg viewBox="0 0 24 24" fill="none">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9.5" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M20 8v6M23 11h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+    </span>
+    <div>
+      <strong>Adicionar funcionário</strong>
+      <span>Cadastrar novo colaborador</span>
+    </div>
+  </a>
+
+  <a href="./registros.html" class="atalho-card">
+    <span class="atalho-icone">
+         <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 9v4l2.5 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 3v2M5.64 5.64l1.41 1.41M3 12h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+    </span>
+    <div>
+      <strong>Corrigir registro</strong>
+      <span>Ajustar jornada ou conferir batidas</span>
+    </div>
+  </a>
+
+  <a href="./relatorios.html" class="atalho-card">
+    <span class="atalho-icone">
+        <svg viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M14 2v6h6M8 13h8M8 17h5M8 9h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+    </span>
+    <div>
+      <strong>Relatórios</strong>
+      <span>Visualizar resumo e exportações</span>
+    </div>
+  </a>
+</div>
+        </div>
+      </section>
+
+      <div class="resumo-card">
+  <div class="resumo-topo">
+    <span>Mostrando os registros mais recentes.</span>
+    <a href="./registros.html" class="botao-secundario">Ver todos</a>
+  </div>
+
+  <div class="resumo-registros">
+    <div class="resumo-linha resumo-cabecalho">
+      <span>Funcionário</span>
+      <span>Entrada</span>
+      <span>Saída</span>
+      <span>Total</span>
+      <span>Status</span>
+    </div>
+
+    <div class="resumo-linha">
+      <strong>Maria Silva</strong>
+      <span>08:02</span>
+      <span>17:11</span>
+      <span>08:09</span>
+      <span class="status-admin encerrado">Encerrado</span>
+    </div>
+
+    <div class="resumo-linha">
+      <strong>João Pedro</strong>
+      <span>08:15</span>
+      <span>—</span>
+      <span>Em aberto</span>
+      <span class="status-admin andamento">Em andamento</span>
+    </div>
+
+    <div class="resumo-linha">
+      <strong>Ana Costa</strong>
+      <span>07:58</span>
+      <span>17:03</span>
+      <span>08:21</span>
+      <span class="status-admin encerrado">Encerrado</span>
+    </div>
+  </div>
+</div>
+
+<div class="admin-bloco dashboard-lateral alertas-card">
+  <div class="bloco-topo">
+    <div>
+      <span class="bloco-tag">Alertas</span>
+      <h2>Alertas importantes</h2>
+      <p>Situações que precisam de atenção no momento.</p>
+    </div>
+  </div>
+
+  <div class="bloco-conteudo">
+    <div id="listaAlertas">
+      <div class="alerta-vazio">
+        <div class="alerta-vazio-icon">!</div>
+        <div class="alerta-vazio-texto">
+          <strong>Nenhum alerta crítico no momento.</strong>
+          <span>Tudo está dentro do esperado agora.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </main>
+
+  <script type="module" src="./dashboard.js"></script>
+</body>
+</html>
