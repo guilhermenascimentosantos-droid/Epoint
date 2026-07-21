@@ -336,7 +336,7 @@ async function redirecionarPorPerfil(user) {
   const papel = (membro.papel || '').toString().trim().toLowerCase();
 
   if (papel === 'admin') {
-    window.location.href = '../frontend-admin/index.html';
+    window.location.href = '../frontend-admin/registros.html';
     return;
   }
 

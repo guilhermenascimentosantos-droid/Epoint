@@ -915,6 +915,8 @@ select {
   background: #ffffff;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  margin-top: 16px;
+  margin-bottom: 16px;
 }
 
 .alertas-card {
